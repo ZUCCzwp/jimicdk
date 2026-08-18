@@ -1,0 +1,361 @@
+@import "tailwindcss";
+@import "@heroui/styles";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
+
+@theme inline {
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, monospace;
+}
+
+:root {
+  --accent: oklch(0.51 0.09 174);
+  --accent-foreground: oklch(0.985 0.01 174);
+  --radius: 0.8rem;
+  --field-radius: 0.9rem;
+  --glow-teal: color-mix(in oklab, var(--accent) 58%, transparent);
+  --glow-slate: oklch(0.58 0.09 236 / 0.42);
+  --glow-mist: oklch(0.74 0.07 174 / 0.62);
+  --glow-core: color-mix(in oklab, var(--accent) 32%, transparent);
+  --grid-line: color-mix(in oklab, var(--foreground) 13%, transparent);
+  --page-tint: oklch(0.965 0.02 174);
+  --atmosphere-overlay: 0.88;
+}
+
+.dark,
+[data-theme="dark"] {
+  --accent: oklch(0.78 0.1 174);
+  --accent-foreground: oklch(0.23 0.04 174);
+  --glow-teal: color-mix(in oklab, var(--accent) 32%, transparent);
+  --glow-slate: oklch(0.42 0.07 236 / 0.34);
+  --glow-mist: oklch(0.38 0.04 174 / 0.28);
+  --glow-core: color-mix(in oklab, var(--accent) 10%, transparent);
+  --grid-line: color-mix(in oklab, var(--foreground) 8%, transparent);
+  --page-tint: var(--background);
+  --atmosphere-overlay: 0.42;
+}
+
+html,
+body,
+#root {
+  min-height: 100dvh;
+}
+
+body {
+  margin: 0;
+  isolation: isolate;
+  font-family: var(--font-sans);
+  color: var(--foreground);
+  background-color: var(--background);
+}
+
+@property --gx1 {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: -6%;
+}
+@property --gy1 {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: -10%;
+}
+@property --gx2 {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 108%;
+}
+@property --gy2 {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: -4%;
+}
+@property --gx3 {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 82%;
+}
+@property --gy3 {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 112%;
+}
+@property --gx4 {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 38%;
+}
+@property --gy4 {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 16%;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: -12%;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(1200px 640px at var(--gx1) var(--gy1), var(--glow-teal), transparent 58%),
+    radial-gradient(980px 560px at var(--gx2) var(--gy2), var(--glow-slate), transparent 54%),
+    radial-gradient(820px 540px at var(--gx3) var(--gy3), var(--glow-mist), transparent 58%),
+    radial-gradient(640px 360px at var(--gx4) var(--gy4), var(--glow-core), transparent 68%),
+    var(--page-tint);
+  animation:
+    glow-drift 28s ease-in-out infinite,
+    glow-breathe 16s ease-in-out infinite;
+}
+
+@keyframes glow-drift {
+  0%,
+  100% {
+    --gx1: -6%;
+    --gy1: -10%;
+    --gx2: 108%;
+    --gy2: -4%;
+    --gx3: 82%;
+    --gy3: 112%;
+    --gx4: 38%;
+    --gy4: 16%;
+  }
+  40% {
+    --gx1: 10%;
+    --gy1: 6%;
+    --gx2: 92%;
+    --gy2: 12%;
+    --gx3: 68%;
+    --gy3: 96%;
+    --gx4: 52%;
+    --gy4: 28%;
+  }
+  70% {
+    --gx1: 2%;
+    --gy1: 14%;
+    --gx2: 102%;
+    --gy2: 2%;
+    --gx3: 88%;
+    --gy3: 104%;
+    --gx4: 28%;
+    --gy4: 8%;
+  }
+}
+
+@keyframes glow-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.88;
+  }
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    repeating-linear-gradient(
+      to right,
+      var(--grid-line) 0 1px,
+      transparent 1px 56px
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      var(--grid-line) 0 1px,
+      transparent 1px 56px
+    ),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  background-size: 56px 56px, 56px 56px, 160px 160px;
+  opacity: var(--atmosphere-overlay);
+  mask-image: radial-gradient(140% 110% at 50% 28%, #000 48%, transparent 92%);
+}
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+details summary::-webkit-details-marker {
+  display: none;
+}
+
+details summary {
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-enter {
+    animation: none;
+  }
+
+  body::before {
+    animation: none;
+    inset: 0;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.alert--accent,
+.alert--danger,
+.alert--success,
+.alert--warning {
+  box-shadow: none;
+}
+
+.alert--accent {
+  background: color-mix(in oklab, var(--accent) 16%, var(--surface));
+  border: 1px solid color-mix(in oklab, var(--accent) 40%, transparent);
+}
+
+.alert--danger {
+  background: color-mix(in oklab, var(--danger) 16%, var(--surface));
+  border: 1px solid color-mix(in oklab, var(--danger) 48%, transparent);
+}
+
+.alert--success {
+  background: color-mix(in oklab, var(--success) 16%, var(--surface));
+  border: 1px solid color-mix(in oklab, var(--success) 40%, transparent);
+}
+
+.alert--warning {
+  background: color-mix(in oklab, var(--warning) 16%, var(--surface));
+  border: 1px solid color-mix(in oklab, var(--warning) 44%, transparent);
+}
+
+.alert--accent .alert__description,
+.alert--danger .alert__description,
+.alert--success .alert__description,
+.alert--warning .alert__description {
+  color: color-mix(in oklab, var(--foreground) 78%, transparent);
+}
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: color-mix(in oklab, var(--background) 38%, transparent);
+  backdrop-filter: blur(22px) saturate(1.55);
+  -webkit-backdrop-filter: blur(22px) saturate(1.55);
+  border-bottom: 1px solid color-mix(in oklab, var(--foreground) 8%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, white 62%, transparent),
+    0 10px 36px color-mix(in oklab, var(--foreground) 5%, transparent);
+}
+
+.dark .app-header,
+[data-theme="dark"] .app-header {
+  background: color-mix(in oklab, var(--background) 42%, transparent);
+  border-bottom-color: color-mix(in oklab, white 10%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, white 14%, transparent),
+    0 12px 40px color-mix(in oklab, black 32%, transparent);
+}
+
+.app-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in oklab, white 22%, transparent),
+    transparent 58%
+  );
+}
+
+.dark .app-header::before,
+[data-theme="dark"] .app-header::before {
+  background: linear-gradient(
+    to bottom,
+    color-mix(in oklab, white 8%, transparent),
+    transparent 62%
+  );
+}
+
+.button {
+  height: 2.75rem;
+  min-height: 2.75rem;
+  font-size: 1rem;
+  padding-inline: 1.05rem;
+}
+
+.button--icon-only {
+  width: 2.75rem;
+  padding-inline: 0;
+}
+
+.button svg:not([data-slot="spinner"] svg) {
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-block: 0;
+}
+
+.app-header nav .button--secondary {
+  background: var(--accent);
+  color: var(--accent-foreground);
+  box-shadow: none;
+}
+
+.app-header nav .button--secondary:hover,
+.app-header nav .button--secondary[data-hovered] {
+  background: color-mix(in oklab, var(--accent) 88%, black);
+  color: var(--accent-foreground);
+}
+
+.app-header nav .button--ghost {
+  color: var(--foreground);
+}
+
+.app-header nav .button--ghost:hover,
+.app-header nav .button--ghost[data-hovered] {
+  background: color-mix(in oklab, var(--foreground) 8%, transparent);
+}
+
+.app-header .chip {
+  min-height: 2.5rem;
+  padding-inline: 0.85rem;
+  padding-block: 0.35rem;
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .app-header {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: var(--background);
+    box-shadow: none;
+  }
+
+  .app-header::before {
+    display: none;
+  }
+
+  body::before,
+  body::after {
+    display: none;
+  }
+}
