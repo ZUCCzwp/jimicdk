@@ -20,7 +20,7 @@ ENV VITE_ASSET_BASE=$VITE_ASSET_BASE
 RUN npm run build
 
 FROM nginx:alpine
-RUN apk add --no-cache gettext ca-certificates
+RUN apk add --no-cache gettext ca-certificates wget
 WORKDIR /usr/share/nginx/html
 
 COPY deploy/nginx.conf.template /etc/nginx/templates/default.conf.template
