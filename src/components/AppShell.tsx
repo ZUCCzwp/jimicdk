@@ -134,7 +134,7 @@ export function AppShell() {
           : "";
 
   return (
-    <div className="min-h-[100dvh] text-foreground">
+    <div className="flex min-h-[100dvh] flex-col text-foreground">
       <header className="app-header">
         <div className="app-header-inner grid h-20 w-full grid-cols-[1fr_auto_1fr] items-center gap-4 px-5 sm:px-8">
           <NavLink className="group flex shrink-0 items-center gap-2.5 justify-self-start text-foreground" to="/">
@@ -313,8 +313,8 @@ export function AppShell() {
       <main
         className={
           location.pathname === "/login"
-            ? "w-full"
-            : "mx-auto w-full max-w-7xl px-5 py-10 sm:px-8 md:py-16"
+            ? "w-full flex-1"
+            : "mx-auto w-full max-w-7xl flex-1 px-5 py-10 sm:px-8 md:py-16"
         }
       >
         <AnimatedOutlet />
