@@ -26,6 +26,8 @@ import {
   type ShopCheckoutResp,
   type ShopOrderResp,
   type ShopOrdersResp,
+  type ShopReductionCodePreviewResp,
+  type AdminReductionCodeResp,
   type UserWalletResp,
   type VerifyCdkResp,
 	type NotificationResp,
@@ -211,6 +213,16 @@ export const api = {
       body: JSON.stringify(body),
     });
   },
+  adminReductionCode() {
+    return request<AdminReductionCodeResp>("/admin/reduction-code", { auth: true });
+  },
+  adminUpdateReductionCode(body: { enabled: boolean; code: string; amount_cents: number; expires_at: string }) {
+    return request<AdminReductionCodeResp>("/admin/reduction-code", {
+      method: "PUT",
+      auth: true,
+      body: JSON.stringify(body),
+    });
+  },
   async adminShopUpload(file: File) {
     const session = getAdminSession();
     const form = new FormData();
@@ -273,7 +285,10 @@ export const api = {
   shopCatalog() {
     return request<ShopCatalogResp>("/shop/catalog");
   },
-  shopCheckout(items: Array<{ productId: number; quantity: number }>, opts?: { email?: string; claim?: string }) {
+  shopCheckout(
+    items: Array<{ productId: number; quantity: number }>,
+    opts?: { email?: string; claim?: string; discountCode?: string },
+  ) {
     return request<ShopCheckoutResp>("/shop/checkout", {
       method: "POST",
       user: "optional",
@@ -281,7 +296,15 @@ export const api = {
         items: items.map((item) => ({ product_id: item.productId, quantity: item.quantity })),
         email: opts?.email ?? "",
         claim: opts?.claim ?? "",
+        discount_code: opts?.discountCode ?? "",
       }),
+    });
+  },
+  shopReductionCodePreview(totalCents: number, code: string) {
+    return request<ShopReductionCodePreviewResp>("/shop/reduction-code/preview", {
+      method: "POST",
+      user: "optional",
+      body: JSON.stringify({ code, total_cents: totalCents }),
     });
   },
   shopConfirm(orderNo: string, claim: string, sessionId?: string) {

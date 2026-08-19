@@ -37,6 +37,7 @@ const nav: NavItem[] = [
   { to: "/admin/products", id: "products", label: "admin.nav.products", icon: Package },
   { to: "/admin/tasks", id: "tasks", label: "admin.nav.tasks", icon: ListChecks },
   { to: "/admin/notifications", id: "notifications", label: "admin.nav.notifications", icon: Megaphone },
+  { to: "/admin/reduction-code", id: "reduction-code", label: "admin.nav.reduction_code" as MsgKey, icon: List },
 ];
 
 function itemActive(item: NavItem, pathname: string) {

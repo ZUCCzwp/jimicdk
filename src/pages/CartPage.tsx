@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Minus, Plus, ShoppingCart, Storefront, Trash } from "@phosphor-icons/react";
 import { api } from "@/api/client";
-import type { ShopCatalogResp, ShopProduct } from "@/api/types";
+import type { ShopCatalogResp, ShopProduct, ShopReductionCodePreviewResp } from "@/api/types";
 import { useUser } from "@/hooks/useUser";
 import { useI18n } from "@/i18n";
 import { guestCheckoutErrorKey, normalizeClaim, validateGuestCheckout } from "@/lib/guestCheckout";
@@ -25,6 +25,8 @@ export function CartPage() {
   const [cart, setCartState] = useState<CartItem[]>(() => getCart());
   const [email, setEmail] = useState("");
   const [claim, setClaim] = useState("");
+  const [discountCode, setDiscountCode] = useState("");
+  const [discountPreview, setDiscountPreview] = useState<ShopReductionCodePreviewResp | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -65,8 +67,37 @@ export function CartPage() {
     return sum + (product ? product.price_cents * item.quantity : 0);
   }, 0);
   const walletBalance = user?.wallet_cents ?? 0;
-  const walletUsed = guest ? 0 : Math.min(walletBalance, total);
-  const stripeDue = guest ? total : Math.max(0, total - walletUsed);
+
+  const discountFinalTotal = discountPreview?.final_cents ?? total;
+  const discountCents = discountPreview?.discount_cents ?? 0;
+
+  const walletUsed = guest ? 0 : Math.min(walletBalance, discountFinalTotal);
+  const stripeDue = guest ? discountFinalTotal : Math.max(0, discountFinalTotal - walletUsed);
+
+  useEffect(() => {
+    const code = discountCode.trim();
+    if (!code) {
+      setDiscountPreview(null);
+      return;
+    }
+
+    let cancelled = false;
+    const id = window.setTimeout(async () => {
+      try {
+        const res = await api.shopReductionCodePreview(total, code);
+        if (cancelled) return;
+        setDiscountPreview(res);
+      } catch {
+        if (cancelled) return;
+        setDiscountPreview(null);
+      }
+    }, 400);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(id);
+    };
+  }, [discountCode, total]);
 
   async function payCart() {
     if (!cart.length) return;
@@ -86,6 +117,7 @@ export function CartPage() {
         {
           email: email.trim() || undefined,
           claim: guest ? normalizeClaim(claim) : undefined,
+          discountCode: discountCode.trim() || undefined,
         },
       );
       persistCheckout(res.order_no, res.claim);
@@ -222,6 +254,33 @@ export function CartPage() {
               </>
             ) : null}
 
+            <div className="mt-6 rounded-2xl border border-border/80 px-4 py-3 text-sm">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-muted">立减码</span>
+                {discountCode.trim() ? (
+                  discountPreview === null ? (
+                    <span className="text-muted">校验中</span>
+                  ) : discountPreview.valid ? (
+                    <span className="font-medium text-accent">-{usd(discountCents)}</span>
+                  ) : (
+                    <span className="font-medium text-danger">无效或已过期</span>
+                  )
+                ) : (
+                  <span className="text-muted">可选</span>
+                )}
+              </div>
+              <Input
+                className="mt-3"
+                value={discountCode}
+                onChange={(e) => setDiscountCode(e.target.value)}
+                placeholder="输入立减码"
+                variant="secondary"
+              />
+              {discountCode.trim() && discountPreview && !discountPreview.valid ? (
+                <p className="mt-2 text-xs text-muted">不生效</p>
+              ) : null}
+            </div>
+
             {!guest && walletBalance > 0 ? (
               <div className="mt-6 rounded-2xl border border-border/80 px-4 py-3 text-sm">
                 <div className="flex items-center justify-between gap-3">
@@ -247,10 +306,10 @@ export function CartPage() {
 
             <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-2xl font-semibold">{usd(stripeDue > 0 ? stripeDue : total)}</p>
+                <p className="text-2xl font-semibold">{usd(stripeDue > 0 ? stripeDue : discountFinalTotal)}</p>
                 {!guest && walletUsed > 0 && stripeDue > 0 ? (
                   <p className="mt-1 text-sm text-muted">
-                    {t("cart.totalWithWallet", { total: usd(total), wallet: usd(walletUsed) })}
+                    {t("cart.totalWithWallet", { total: usd(discountFinalTotal), wallet: usd(walletUsed) })}
                   </p>
                 ) : null}
               </div>

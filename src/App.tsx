@@ -7,6 +7,7 @@ import { AdminCategoriesPage } from "@/pages/AdminCategoriesPage";
 import { AdminProductsPage } from "@/pages/AdminProductsPage";
 import { AdminTasksPage } from "@/pages/AdminTasksPage";
 import { AdminNotificationsPage } from "@/pages/AdminNotificationsPage";
+import { AdminReductionCodePage } from "@/pages/AdminReductionCodePage";
 import { AccountPage } from "@/pages/AccountPage";
 import { CancelPage } from "@/pages/CancelPage";
 import { FaqPage } from "@/pages/FaqPage";
@@ -31,6 +32,7 @@ export default function App() {
           <Route path="products" element={<AdminProductsPage />} />
           <Route path="notifications" element={<AdminNotificationsPage />} />
           <Route path="tasks" element={<AdminTasksPage />} />
+          <Route path="reduction-code" element={<AdminReductionCodePage />} />
         </Route>
         <Route element={<AppShell />}>
           <Route path="/" element={<RedeemPage />} />

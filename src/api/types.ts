@@ -258,6 +258,20 @@ export type ShopCheckoutResp = {
   checkout_url: string;
 };
 
+export type ShopReductionCodePreviewResp = {
+  valid: boolean;
+  discount_cents: number;
+  final_cents: number;
+};
+
+export type AdminReductionCodeResp = {
+  enabled: boolean;
+  code: string;
+  amount_cents: number;
+  expires_at?: string;
+  updated_at?: string;
+};
+
 export type ShopOrderResp = {
   order_no: string;
   claim: string;
