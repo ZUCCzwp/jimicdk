@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "@/api/client";
 import { isTerminal } from "@/api/types";
-import type { AnnouncementResp, QueueStatusResp, TaskView } from "@/api/types";
+import type { AnnouncementResp, NotificationResp, QueueStatusResp, TaskView } from "@/api/types";
 import { useI18n } from "@/i18n";
 import { getOrders, removeOrder, replaceOrder, upsertOrder, type StoredOrder } from "@/lib/storage";
 
@@ -26,33 +26,102 @@ export function useAnnouncement() {
   return data;
 }
 
-export function useQueue() {
-  const [data, setData] = useState<QueueStatusResp | null>(null);
+export function useNotifications() {
+  const [data, setData] = useState<NotificationResp | null>(null);
 
   useEffect(() => {
-    const source = new EventSource(api.queueEventsUrl());
-    const apply = (ev: MessageEvent<string>) => {
-      if (!ev.data || ev.data === "{}") return;
-      try {
-        const parsed = JSON.parse(ev.data) as QueueStatusResp;
-        if (typeof parsed.pending_count === "number") {
-          setData(parsed);
-        }
-      } catch {
-        // ignore keep-alive / malformed frames
-      }
-    };
-    source.addEventListener("queue_status", apply);
-    source.addEventListener("status", apply);
-    source.onmessage = apply;
+    let cancelled = false;
+    api
+      .notifications()
+      .then((d) => {
+        if (!cancelled) setData(d);
+      })
+      .catch(() => {
+        if (!cancelled) setData(null);
+      });
     return () => {
-      source.removeEventListener("queue_status", apply);
-      source.removeEventListener("status", apply);
-      source.close();
+      cancelled = true;
     };
   }, []);
 
   return data;
+}
+
+const QUEUE_POLL_MS = 3000;
+
+function applyQueueStatus(
+  parsed: QueueStatusResp,
+  setData: (value: QueueStatusResp) => void,
+) {
+  if (typeof parsed.pending_count === "number") {
+    setData(parsed);
+  }
+}
+
+export function useQueue() {
+  const [data, setData] = useState<QueueStatusResp | null>(null);
+  const [live, setLive] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    let pollTimer: ReturnType<typeof setInterval> | null = null;
+    let source: EventSource | null = null;
+
+    const fetchStatus = () =>
+      api
+        .queueStatus()
+        .then((next) => {
+          if (!cancelled) applyQueueStatus(next, setData);
+        })
+        .catch(() => {});
+
+    const stopPolling = () => {
+      if (pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+      }
+    };
+
+    const startPolling = () => {
+      stopPolling();
+      pollTimer = setInterval(fetchStatus, QUEUE_POLL_MS);
+    };
+
+    void fetchStatus();
+    startPolling();
+
+    source = new EventSource(api.queueEventsUrl());
+
+    const onEvent = (ev: MessageEvent<string>) => {
+      if (!ev.data || ev.data === "{}") return;
+      try {
+        applyQueueStatus(JSON.parse(ev.data) as QueueStatusResp, setData);
+        if (!cancelled) setLive(true);
+      } catch {
+        // ignore keep-alive / malformed frames
+      }
+    };
+
+    source.addEventListener("queue_status", onEvent);
+    source.addEventListener("status", onEvent);
+    source.onmessage = onEvent;
+
+    source.onopen = () => {
+      if (!cancelled) setLive(true);
+    };
+
+    source.onerror = () => {
+      if (!cancelled) setLive(false);
+    };
+
+    return () => {
+      cancelled = true;
+      stopPolling();
+      source?.close();
+    };
+  }, []);
+
+  return { data, live };
 }
 
 export function useOrders() {

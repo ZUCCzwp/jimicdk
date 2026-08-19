@@ -264,7 +264,7 @@ export function RedeemPage() {
                     variant="secondary"
                   />
                   {verify?.valid ? (
-                    <Description>
+                    <Description className="text-base">
                       {t("verify.ok", { plan: PLAN_LABEL[verify.plan_type ?? "plus"] })}
                       {verify.refresh_remaining
                         ? ` · ${t("refresh.remaining", { n: verify.refresh_remaining })}`

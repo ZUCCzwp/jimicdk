@@ -1,11 +1,12 @@
 import { ArrowsClockwise, CopySimple, Prohibit, Trash } from "@phosphor-icons/react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "@/api/client";
 import { PLAN_LABEL, isCancellable, isRefreshable, isTerminal } from "@/api/types";
-import type { RefreshCdkResp } from "@/api/types";
+import type { RefreshCdkResp, TaskView } from "@/api/types";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useOrders, useTaskPoll } from "@/hooks/useApi";
+import { useUser } from "@/hooks/useUser";
 import { useI18n } from "@/i18n";
 import { splitCodes } from "@/lib/codes";
 import {
@@ -22,6 +23,7 @@ import {
 export function OrdersPage() {
   const navigate = useNavigate();
   const { orders, trackMany, drop, replace } = useOrders();
+  const { user } = useUser();
   const { t, tb, te } = useI18n();
   const [draft, setDraft] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
@@ -29,9 +31,43 @@ export function OrdersPage() {
   const [refreshing, setRefreshing] = useState<string | null>(null);
   const [refreshed, setRefreshed] = useState<RefreshCdkResp | null>(null);
   const [copied, setCopied] = useState(false);
-  const codes = orders.map((o) => o.cdkCode);
+  const [accountTasks, setAccountTasks] = useState<TaskView[]>([]);
+
+  useEffect(() => {
+    if (!user) {
+      setAccountTasks([]);
+      return;
+    }
+    let cancelled = false;
+    api
+      .userOrders()
+      .then((res) => {
+        if (!cancelled) setAccountTasks(res.tasks ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) setAccountTasks([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
+  const accountCodes = useMemo(() => accountTasks.map((item) => item.cdk_code).filter(Boolean), [accountTasks]);
+  const codes = useMemo(() => {
+    const seen = new Set<string>();
+    const next: string[] = [];
+    for (const code of [...accountCodes, ...orders.map((o) => o.cdkCode)]) {
+      if (!code || seen.has(code)) continue;
+      seen.add(code);
+      next.push(code);
+    }
+    return next;
+  }, [accountCodes, orders]);
   const { tasks, error, loading } = useTaskPoll(codes);
   const byCode = new Map(tasks.map((item) => [item.cdk_code, item]));
+  for (const item of accountTasks) {
+    if (!byCode.has(item.cdk_code)) byCode.set(item.cdk_code, item);
+  }
 
   function onLookup() {
     const parsed = splitCodes(draft);
@@ -51,6 +87,9 @@ export function OrdersPage() {
     try {
       const res = await api.refreshCdk(cdkCode);
       replace(cdkCode, res.new_code);
+      setAccountTasks((prev) =>
+        prev.map((item) => (item.cdk_code === cdkCode ? { ...item, cdk_code: res.new_code } : item)),
+      );
       setRefreshed(res);
       setCopied(false);
     } catch (err) {
@@ -76,7 +115,7 @@ export function OrdersPage() {
     <section>
       <h1 className="text-4xl font-semibold tracking-tight md:text-5xl">{t("orders.title")}</h1>
       <p className="mt-4 max-w-[48ch] text-base leading-relaxed text-muted md:text-lg">
-        {t("orders.lead")}
+        {user ? t("orders.signedInLead") : t("orders.lead")}
       </p>
 
       <Surface className="mt-10 flex flex-col gap-6 rounded-3xl p-6 md:p-9">
@@ -117,9 +156,9 @@ export function OrdersPage() {
         </form>
       </Surface>
 
-      {orders.length > 0 && (
+      {codes.length > 0 && (
         <p className="mt-4 text-sm text-muted">
-          {t("orders.batchFound", { found, total: orders.length })}
+          {t("orders.batchFound", { found, total: codes.length })}
           {truncated ? ` ${t("orders.batchTruncated")}` : ""}
         </p>
       )}
@@ -160,26 +199,32 @@ export function OrdersPage() {
         </Alert>
       )}
 
-      {orders.length === 0 ? (
+      {codes.length === 0 ? (
         <div className="mt-10 max-w-lg rounded-3xl border border-border/80 bg-surface p-6">
           <p className="text-lg font-semibold">{t("orders.emptyTitle")}</p>
-          <p className="mt-2 text-muted">{t("orders.emptyDesc")}</p>
-          <Button className="mt-5" onPress={() => navigate("/")}>
-            {t("orders.goRedeem")}
-          </Button>
+          <p className="mt-2 text-muted">{user ? t("orders.emptyDesc") : t("orders.emptyGuest")}</p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Button onPress={() => navigate("/")}>{t("orders.goRedeem")}</Button>
+            {!user && (
+              <Button variant="secondary" onPress={() => navigate("/login")}>
+                {t("nav.login")}
+              </Button>
+            )}
+          </div>
         </div>
       ) : (
         <ul className="mt-6 grid gap-4">
-          {orders.map((order) => {
-            const task = byCode.get(order.cdkCode);
+          {codes.map((cdkCode) => {
+            const task = byCode.get(cdkCode);
+            const localOnly = !accountCodes.includes(cdkCode);
             return (
-              <li key={order.cdkCode}>
+              <li key={cdkCode}>
                 <div className="rounded-3xl border border-border/80 bg-surface p-5">
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="truncate font-mono text-base font-medium">{order.cdkCode}</p>
+                      <p className="truncate font-mono text-base font-medium">{cdkCode}</p>
                       <p className="mt-1 text-sm text-muted">
-                        {task
+                        {task?.plan_type
                           ? `${PLAN_LABEL[task.plan_type] ?? task.plan_type}  ${task.account_email}`
                           : loading
                             ? t("orders.looking")
@@ -192,7 +237,7 @@ export function OrdersPage() {
                       ) : null}
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
-                      {task ? (
+                      {task?.task_status ? (
                         <StatusBadge size="lg" status={task.task_status} />
                       ) : loading ? (
                         <Spinner size="sm" />
@@ -203,7 +248,7 @@ export function OrdersPage() {
                           aria-label={t("orders.cancelAria")}
                           size="lg"
                           variant="ghost"
-                          onPress={() => navigate(`/cancel?cdk=${encodeURIComponent(order.cdkCode)}`)}
+                          onPress={() => navigate(`/cancel?cdk=${encodeURIComponent(cdkCode)}`)}
                         >
                           <Prohibit size={16} />
                         </Button>
@@ -212,21 +257,21 @@ export function OrdersPage() {
                         <Button
                           isIconOnly
                           aria-label={t("orders.refreshAria")}
-                          isPending={refreshing === order.cdkCode}
+                          isPending={refreshing === cdkCode}
                           size="lg"
                           variant="ghost"
-                          onPress={() => void onRefresh(order.cdkCode)}
+                          onPress={() => void onRefresh(cdkCode)}
                         >
                           <ArrowsClockwise size={16} />
                         </Button>
                       )}
-                      {(!task || isTerminal(task.task_status)) && (
+                      {localOnly && (!task || isTerminal(task.task_status)) && (
                         <Button
                           isIconOnly
                           aria-label={t("orders.removeAria")}
                           size="lg"
                           variant="ghost"
-                          onPress={() => drop(order.cdkCode)}
+                          onPress={() => drop(cdkCode)}
                         >
                           <Trash size={16} />
                         </Button>

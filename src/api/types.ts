@@ -68,6 +68,11 @@ export type AnnouncementResp = {
   content: string;
 };
 
+export type NotificationResp = {
+  enabled: boolean;
+  content: string;
+};
+
 export type SubscriptionSummary = {
   plan_type: string;
   subscription_plan: string;
@@ -147,6 +152,137 @@ export type AdminListScope = "stock" | "allocated" | "used" | "all";
 
 export type AdminListResp = {
   items: AdminCdkItem[];
+};
+
+export type UserProfile = {
+  id: number;
+  username: string;
+  email?: string;
+  display_name: string;
+  wallet_cents: number;
+  created_at: string;
+};
+
+export type UserAuthResp = {
+  token: string;
+  expires_at: string;
+  user: UserProfile;
+};
+
+export type UserWalletRechargeItem = {
+  order_no: string;
+  amount_cents: number;
+  status: "pending" | "paid" | string;
+  created_at: string;
+  paid_at?: string;
+};
+
+export type UserWalletResp = {
+  balance_cents: number;
+  auto_credit: boolean;
+  min_cents: number;
+  max_cents: number;
+  recharges: UserWalletRechargeItem[];
+};
+
+export type UserRechargeResp = {
+  order_no: string;
+  amount_cents: number;
+  status: string;
+  credited: boolean;
+  balance_cents: number;
+  created_at: string;
+};
+
+export type ShopCategory = {
+  id: number;
+  slug: string;
+  name: string;
+};
+
+export type ShopProduct = {
+  id: number;
+  category_id: number;
+  slug: string;
+  cover_url?: string;
+  name: string;
+  description: string;
+  tags?: string[];
+  plan_type: PlanType | string;
+  price_cents: number;
+  currency: string;
+  stock: number;
+};
+
+export type AdminShopCategory = {
+  id: number;
+  slug: string;
+  name_zh: string;
+  name_en: string;
+  sort: number;
+};
+
+export type AdminShopProduct = {
+  id: number;
+  category_id: number;
+  slug: string;
+  cover_url: string;
+  name_zh: string;
+  name_en: string;
+  description_zh: string;
+  description_en: string;
+  tags: string[];
+  plan_type: PlanType | string;
+  price_cents: number;
+  currency: string;
+  stock: number;
+  enabled: boolean;
+  sort: number;
+};
+
+export type AdminShopCatalogResp = {
+  categories: AdminShopCategory[];
+  products: AdminShopProduct[];
+};
+
+export type ShopCatalogResp = {
+  categories: ShopCategory[];
+  products: ShopProduct[];
+  stripe_on: boolean;
+  currency: string;
+};
+
+export type ShopCheckoutResp = {
+  order_no: string;
+  claim: string;
+  checkout_url: string;
+};
+
+export type ShopOrderResp = {
+  order_no: string;
+  claim: string;
+  product_slug: string;
+  plan_type: PlanType | string;
+  quantity: number;
+  amount_cents: number;
+  currency: string;
+  status: string;
+  items?: ShopOrderLine[];
+  codes?: string[];
+  created_at: string;
+  paid_at?: string;
+};
+
+export type ShopOrderLine = {
+  product_id: number;
+  product_slug: string;
+  plan_type: PlanType | string;
+  quantity: number;
+  amount_cents: number;
+};
+
+export type ShopOrdersResp = {
+  orders: ShopOrderResp[];
 };
 
 export class ApiError extends Error {

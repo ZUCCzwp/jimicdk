@@ -47,6 +47,9 @@ body {
   font-family: var(--font-sans);
   color: var(--foreground);
   background-color: var(--background);
+  transition:
+    background-color 0.35s ease,
+    color 0.35s ease;
 }
 
 @property --gx1 {
@@ -256,6 +259,7 @@ details summary {
   position: sticky;
   top: 0;
   z-index: 20;
+  width: 100%;
   background: color-mix(in oklab, var(--background) 38%, transparent);
   backdrop-filter: blur(22px) saturate(1.55);
   -webkit-backdrop-filter: blur(22px) saturate(1.55);
@@ -263,6 +267,299 @@ details summary {
   box-shadow:
     inset 0 1px 0 color-mix(in oklab, white 62%, transparent),
     0 10px 36px color-mix(in oklab, var(--foreground) 5%, transparent);
+  transition:
+    background 0.35s ease,
+    border-bottom-color 0.35s ease,
+    box-shadow 0.35s ease;
+}
+
+.app-header-inner {
+  max-width: none;
+}
+
+.app-footer {
+  position: relative;
+  width: 100%;
+  background: color-mix(in oklab, var(--background) 38%, transparent);
+  backdrop-filter: blur(22px) saturate(1.55);
+  -webkit-backdrop-filter: blur(22px) saturate(1.55);
+  border-top: 1px solid color-mix(in oklab, var(--foreground) 8%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, white 52%, transparent),
+    0 -10px 30px color-mix(in oklab, var(--foreground) 4%, transparent);
+  transition:
+    background 0.35s ease,
+    border-top-color 0.35s ease,
+    box-shadow 0.35s ease;
+}
+
+.app-footer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to top,
+    color-mix(in oklab, white 22%, transparent),
+    transparent 58%
+  );
+}
+
+.footer-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.25rem;
+  width: 2.25rem;
+  border-radius: 0.75rem;
+  border: 1px solid color-mix(in oklab, var(--foreground) 10%, transparent);
+  background: color-mix(in oklab, var(--foreground) 6%, transparent);
+  color: var(--foreground);
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.footer-toggle-btn:hover {
+  background: color-mix(in oklab, var(--foreground) 12%, transparent);
+  border-color: color-mix(in oklab, var(--foreground) 18%, transparent);
+  box-shadow: 0 12px 28px color-mix(in oklab, var(--foreground) 10%, transparent);
+  transform: translateY(-1px);
+}
+
+.footer-toggle-btn--lang {
+  width: auto;
+  padding-inline: 0.75rem;
+  gap: 0.35rem;
+}
+
+.footer-social-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.75rem;
+  border: 1px solid color-mix(in oklab, var(--foreground) 10%, transparent);
+  background: color-mix(in oklab, var(--foreground) 6%, transparent);
+  color: var(--foreground);
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.footer-social-link:hover {
+  background: color-mix(in oklab, var(--foreground) 12%, transparent);
+  border-color: color-mix(in oklab, var(--foreground) 18%, transparent);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px color-mix(in oklab, var(--foreground) 10%, transparent);
+}
+
+.footer-social-link__icon {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.footer-column-title {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--foreground) 65%, transparent);
+}
+
+.footer-link {
+  color: color-mix(in oklab, var(--foreground) 75%, transparent);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.55rem;
+  border-radius: 0.6rem;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    transform 0.2s ease;
+  background: transparent;
+}
+
+.footer-link:hover {
+  color: var(--foreground);
+  background: color-mix(in oklab, var(--foreground) 8%, transparent);
+  transform: translateY(-1px);
+}
+
+.footer-link:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 30%, transparent);
+}
+
+.app-footer-watermark {
+  pointer-events: none;
+  position: absolute;
+  top: 55%;
+  left: 50%;
+  z-index: 0;
+  transform: translate(-50%, -50%);
+  user-select: none;
+  white-space: nowrap;
+  font-weight: 700;
+  font-size: clamp(4rem, 16vw, 11rem);
+  line-height: 1;
+  color: color-mix(in oklab, var(--foreground) 12%, transparent);
+  opacity: 0.28;
+}
+
+.queue-light {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 3px 4px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--foreground) 10%, transparent);
+}
+
+.queue-light__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--foreground) 18%, transparent);
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.queue-light__dot--red.is-on {
+  background: #ef4444;
+  box-shadow: 0 0 6px color-mix(in oklab, #ef4444 70%, transparent);
+}
+
+.queue-light__dot--yellow.is-on {
+  background: #eab308;
+  box-shadow: 0 0 6px color-mix(in oklab, #eab308 70%, transparent);
+}
+
+.queue-light__dot--green.is-on {
+  background: #22c55e;
+  box-shadow: 0 0 6px color-mix(in oklab, #22c55e 70%, transparent);
+}
+
+.queue-light--loading .queue-light__dot--yellow.is-on {
+  background: color-mix(in oklab, var(--foreground) 35%, transparent);
+  box-shadow: none;
+  animation: queue-light-loading 1.2s ease-in-out infinite;
+}
+
+.queue-light--live .queue-light__dot.is-on {
+  animation: queue-light-pulse 1.8s ease-in-out infinite;
+}
+
+.queue-count {
+  transition: opacity 0.2s ease;
+}
+
+@keyframes queue-light-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.72;
+    transform: scale(0.92);
+  }
+}
+
+@keyframes queue-light-loading {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .queue-light--live .queue-light__dot.is-on,
+  .queue-light--loading .queue-light__dot--yellow.is-on {
+    animation: none;
+  }
+}
+
+.shop-product-card {
+  border: 2px solid transparent;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.shop-product-card-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.shop-product-card-link:hover .shop-product-card,
+.shop-product-card-link:focus-visible .shop-product-card {
+  border-color: color-mix(in oklab, var(--accent) 45%, transparent);
+  box-shadow: 0 12px 32px color-mix(in oklab, var(--accent) 10%, transparent);
+  transform: translateY(-2px);
+}
+
+.shop-product-card-link:focus-visible {
+  outline: none;
+}
+
+.shop-product-card-link:focus-visible .shop-product-card {
+  border-color: color-mix(in oklab, var(--accent) 72%, transparent);
+}
+
+.shop-product-card--selected {
+  border-color: color-mix(in oklab, var(--accent) 72%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--accent) 22%, transparent),
+    0 14px 36px color-mix(in oklab, var(--accent) 14%, transparent);
+}
+
+.shop-product-card__cover {
+  cursor: pointer;
+}
+
+.shop-product-card__cover:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--accent) 70%, transparent);
+  outline-offset: -2px;
+}
+
+.shop-product-card__cover-placeholder {
+  background:
+    radial-gradient(ellipse 60% 50% at 80% 20%, color-mix(in oklab, var(--accent) 24%, transparent), transparent),
+    radial-gradient(ellipse 50% 60% at 20% 80%, color-mix(in oklab, var(--accent) 16%, transparent), transparent),
+    linear-gradient(
+      160deg,
+      color-mix(in oklab, var(--surface) 100%, transparent) 0%,
+      color-mix(in oklab, var(--foreground) 6%, var(--surface)) 100%
+    );
+}
+
+.shop-product-card__check {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-foreground);
+  box-shadow: 0 6px 18px color-mix(in oklab, var(--accent) 42%, transparent);
 }
 
 .dark .app-header,
@@ -272,6 +569,24 @@ details summary {
   box-shadow:
     inset 0 1px 0 color-mix(in oklab, white 14%, transparent),
     0 12px 40px color-mix(in oklab, black 32%, transparent);
+}
+
+.dark .app-footer,
+[data-theme="dark"] .app-footer {
+  background: color-mix(in oklab, var(--background) 42%, transparent);
+  border-top-color: color-mix(in oklab, white 10%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, white 12%, transparent),
+    0 -12px 34px color-mix(in oklab, black 30%, transparent);
+}
+
+.dark .app-footer::before,
+[data-theme="dark"] .app-footer::before {
+  background: linear-gradient(
+    to top,
+    color-mix(in oklab, white 8%, transparent),
+    transparent 62%
+  );
 }
 
 .app-header::before {
@@ -354,8 +669,27 @@ details summary {
     display: none;
   }
 
+  .app-footer {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: var(--background);
+    box-shadow: none;
+  }
+
+  .app-footer::before {
+    display: none;
+  }
+
   body::before,
   body::after {
     display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body,
+  .app-header,
+  .app-footer {
+    transition: none !important;
   }
 }
