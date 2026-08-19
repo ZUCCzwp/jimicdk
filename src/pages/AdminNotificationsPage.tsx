@@ -91,7 +91,7 @@ export function AdminNotificationsPage() {
           </div>
         ) : (
           <div className="grid gap-6">
-            <Card className="p-4" variant="flat">
+            <Card className="p-4" variant="secondary">
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <p className="text-sm font-medium text-muted">{t("admin.notifications.enabledLabel")}</p>
@@ -115,7 +115,7 @@ export function AdminNotificationsPage() {
                 rows={6}
                 spellCheck={false}
                 variant="secondary"
-                isDisabled={busy === "save"}
+                disabled={busy === "save"}
               />
             </TextField>
 

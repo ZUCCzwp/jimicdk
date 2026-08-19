@@ -28,7 +28,7 @@ function cartQtyFor(productId: number): number {
 export function ShopProductPage() {
   const { slug } = useParams<{ slug: string }>();
   const { t, te } = useI18n();
-  const { user, session, applyAuth } = useUser();
+  const { user } = useUser();
   const guest = !user;
   const [catalog, setCatalog] = useState<ShopCatalogResp | null>(null);
   const [qty, setQty] = useState(1);

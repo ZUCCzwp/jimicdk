@@ -300,7 +300,7 @@ export function AppShell() {
       )}
       {notifications?.enabled && notifications.content && (
         <div className="mx-auto max-w-7xl px-5 pt-6 sm:px-8">
-          <Alert status="secondary">
+          <Alert status="default">
             <Alert.Indicator />
             <Alert.Content>
               <Alert.Title>{t("notifications.title")}</Alert.Title>
