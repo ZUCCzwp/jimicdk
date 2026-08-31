@@ -282,6 +282,13 @@ export const api = {
       body: JSON.stringify({ amount_cents: amountCents }),
     });
   },
+  userWalletConfirm(orderNo: string, sessionId?: string) {
+    return request<UserRechargeResp>("/user/wallet/confirm", {
+      method: "POST",
+      user: true,
+      body: JSON.stringify({ order_no: orderNo, session_id: sessionId ?? "" }),
+    });
+  },
   shopCatalog() {
     return request<ShopCatalogResp>("/shop/catalog");
   },

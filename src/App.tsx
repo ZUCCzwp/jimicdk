@@ -9,6 +9,7 @@ import { AdminTasksPage } from "@/pages/AdminTasksPage";
 import { AdminNotificationsPage } from "@/pages/AdminNotificationsPage";
 import { AdminReductionCodePage } from "@/pages/AdminReductionCodePage";
 import { AccountPage } from "@/pages/AccountPage";
+import { WalletReturnPage } from "@/pages/WalletReturnPage";
 import { CancelPage } from "@/pages/CancelPage";
 import { FaqPage } from "@/pages/FaqPage";
 import { LoginPage } from "@/pages/LoginPage";
@@ -46,6 +47,7 @@ export default function App() {
           <Route path="/subscription" element={<SubscriptionPage />} />
           <Route path="/faq" element={<FaqPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/account/wallet/return" element={<WalletReturnPage />} />
           <Route path="/account" element={<AccountPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

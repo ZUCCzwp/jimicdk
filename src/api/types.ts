@@ -191,6 +191,7 @@ export type UserRechargeResp = {
   status: string;
   credited: boolean;
   balance_cents: number;
+  checkout_url?: string;
   created_at: string;
 };
 

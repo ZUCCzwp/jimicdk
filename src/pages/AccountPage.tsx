@@ -84,6 +84,10 @@ export function AccountPage() {
     setNotice(null);
     try {
       const res = await api.userRecharge(Math.round(usdAmount * 100));
+      if (res.checkout_url) {
+        window.location.assign(res.checkout_url);
+        return;
+      }
       const w = await api.userWallet();
       setWallet(w);
       if (session) {
