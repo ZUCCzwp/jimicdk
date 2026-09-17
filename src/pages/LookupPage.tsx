@@ -31,7 +31,7 @@ function rememberOrder(order: ShopOrderResp) {
 }
 
 export function LookupPage() {
-  const { t, te, locale } = useI18n();
+  const { t, te } = useI18n();
   const { user } = useUser();
   const [mine, setMine] = useState<ShopOrderResp[]>([]);
   const [localPurchases, setLocalPurchases] = useState<StoredPurchase[]>(() => getPurchases());
@@ -67,7 +67,6 @@ export function LookupPage() {
       receiptFromShopOrder(order, {
         billToName: user?.display_name || user?.username,
         billToEmail: order.email || user?.email || lookupEmail.trim() || undefined,
-        locale,
       }),
     );
   }
@@ -77,7 +76,6 @@ export function LookupPage() {
       receiptFromPurchase(purchase, {
         billToName: user?.display_name || user?.username,
         billToEmail: user?.email || lookupEmail.trim() || undefined,
-        locale,
       }),
     );
   }

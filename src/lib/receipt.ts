@@ -27,30 +27,48 @@ function money(cents: number, currency = "USD"): string {
   return code === "USD" ? `$${amount}` : `${amount} ${code}`;
 }
 
-/** e.g. May 27, 2026 */
-export function formatReceiptDate(raw: string, locale: "zh" | "en" = "en"): string {
+/** Receipt body is always English (e.g. September 17, 2026). */
+export function formatReceiptDate(raw: string): string {
   const trimmed = raw.trim();
   if (!trimmed) return "—";
+  const m = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) {
+    const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+    return d.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      timeZone: "UTC",
+    });
+  }
   const normalized = trimmed.includes("T") ? trimmed : trimmed.replace(" ", "T");
   const d = new Date(normalized);
-  if (Number.isNaN(d.getTime())) {
-    const m = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/);
-    if (m) {
-      const fallback = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
-      return fallback.toLocaleDateString(locale === "zh" ? "zh-CN" : "en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-    }
-    return trimmed;
-  }
-  return d.toLocaleDateString(locale === "zh" ? "zh-CN" : "en-US", {
+  if (Number.isNaN(d.getTime())) return trimmed;
+  return d.toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
 }
+
+/** Fixed English copy for receipt preview / print / PDF. */
+export const RECEIPT_EN = {
+  title: "Receipt",
+  number: "Receipt number",
+  datePaid: "Date paid",
+  billTo: "Bill to",
+  paidOn: "paid on",
+  date: "Date",
+  description: "Description",
+  qty: "Qty",
+  unitPrice: "Unit price",
+  fee: "Fee",
+  amount: "Amount",
+  subtotal: "Subtotal",
+  total: "Total",
+  amountPaid: "Amount paid",
+  page: "Page 1 of 1",
+} as const;
 
 export function formatMoney(cents: number, currency = "USD"): string {
   return money(cents, currency);
@@ -91,10 +109,10 @@ function linesFromOrder(order: ShopOrderResp, dateLabel: string): ReceiptLine[] 
 
 export function receiptFromShopOrder(
   order: ShopOrderResp,
-  opts?: { billToName?: string; billToEmail?: string; locale?: "zh" | "en" },
+  opts?: { billToName?: string; billToEmail?: string },
 ): ReceiptData {
   const paidRaw = order.paid_at || order.created_at;
-  const datePaid = formatReceiptDate(paidRaw, opts?.locale ?? "en");
+  const datePaid = formatReceiptDate(paidRaw);
   return {
     receiptNo: order.order_no,
     datePaid,
@@ -108,9 +126,9 @@ export function receiptFromShopOrder(
 
 export function receiptFromPurchase(
   purchase: StoredPurchase,
-  opts?: { billToName?: string; billToEmail?: string; locale?: "zh" | "en" },
+  opts?: { billToName?: string; billToEmail?: string },
 ): ReceiptData {
-  const datePaid = formatReceiptDate(purchase.paidAt, opts?.locale ?? "en");
+  const datePaid = formatReceiptDate(purchase.paidAt);
   const qty = 1;
   return {
     receiptNo: purchase.orderNo,

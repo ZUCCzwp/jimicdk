@@ -1,14 +1,16 @@
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { DownloadSimple, Printer, X } from "@phosphor-icons/react";
-import { Button } from "@heroui/react";
+import { Button, Input, Label, TextField } from "@heroui/react";
 import { useI18n } from "@/i18n";
 import {
   COMPANY,
+  RECEIPT_EN,
   formatMoney,
   formatMoneyWithCode,
   type ReceiptData,
 } from "@/lib/receipt";
 import { downloadReceiptPdf } from "@/lib/receiptPdf";
+import { finalizeReceipt, getFinalizedReceipt } from "@/lib/storage";
 
 type Props = {
   data: ReceiptData;
@@ -21,6 +23,23 @@ export function OrderReceiptModal({ data, open, onClose }: Props) {
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const printRef = useRef<HTMLDivElement>(null);
+  const [billToName, setBillToName] = useState(data.billToName ?? "");
+  const [billToEmail, setBillToEmail] = useState(data.billToEmail ?? "");
+  const [locked, setLocked] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const saved = getFinalizedReceipt(data.receiptNo);
+    if (saved) {
+      setBillToName(saved.billToName);
+      setBillToEmail(saved.billToEmail);
+      setLocked(true);
+      return;
+    }
+    setBillToName(data.billToName ?? "");
+    setBillToEmail(data.billToEmail ?? "");
+    setLocked(false);
+  }, [open, data.billToName, data.billToEmail, data.receiptNo]);
 
   useEffect(() => {
     if (!open) return;
@@ -38,13 +57,19 @@ export function OrderReceiptModal({ data, open, onClose }: Props) {
 
   if (!open) return null;
 
+  const receipt: ReceiptData = {
+    ...data,
+    billToName: billToName.trim() || undefined,
+    billToEmail: billToEmail.trim() || undefined,
+  };
+
   function onPrint() {
     const node = printRef.current;
     if (!node) return;
     const win = window.open("", "_blank", "noopener,noreferrer,width=900,height=1200");
     if (!win) return;
     win.document.open();
-    win.document.write(`<!DOCTYPE html><html><head><title>${data.receiptNo}</title>
+    win.document.write(`<!DOCTYPE html><html><head><title>${receipt.receiptNo}</title>
 <style>
   @page { margin: 16mm; size: letter; }
   * { box-sizing: border-box; }
@@ -71,7 +96,6 @@ export function OrderReceiptModal({ data, open, onClose }: Props) {
     win.onload = () => {
       win.print();
     };
-    // Fallback if onload already fired
     setTimeout(() => {
       try {
         win.print();
@@ -82,23 +106,30 @@ export function OrderReceiptModal({ data, open, onClose }: Props) {
   }
 
   function onDownload() {
-    downloadReceiptPdf(data, {
-      receipt: t("receipt.title"),
-      receiptNumber: t("receipt.number"),
-      datePaid: t("receipt.datePaid"),
-      billTo: t("receipt.billTo"),
-      paidOn: t("receipt.paidOn"),
-      date: t("receipt.col.date"),
-      description: t("receipt.col.description"),
-      qty: t("receipt.col.qty"),
-      unitPrice: t("receipt.col.unitPrice"),
-      fee: t("receipt.col.fee"),
-      amount: t("receipt.col.amount"),
-      subtotal: t("receipt.subtotal"),
-      total: t("receipt.total"),
-      amountPaid: t("receipt.amountPaid"),
-      page: t("receipt.page"),
+    if (locked) return;
+    downloadReceiptPdf(receipt, {
+      receipt: RECEIPT_EN.title,
+      receiptNumber: RECEIPT_EN.number,
+      datePaid: RECEIPT_EN.datePaid,
+      billTo: RECEIPT_EN.billTo,
+      paidOn: RECEIPT_EN.paidOn,
+      date: RECEIPT_EN.date,
+      description: RECEIPT_EN.description,
+      qty: RECEIPT_EN.qty,
+      unitPrice: RECEIPT_EN.unitPrice,
+      fee: RECEIPT_EN.fee,
+      amount: RECEIPT_EN.amount,
+      subtotal: RECEIPT_EN.subtotal,
+      total: RECEIPT_EN.total,
+      amountPaid: RECEIPT_EN.amountPaid,
+      page: RECEIPT_EN.page,
     });
+    finalizeReceipt({
+      orderNo: data.receiptNo,
+      billToName: billToName.trim(),
+      billToEmail: billToEmail.trim(),
+    });
+    setLocked(true);
   }
 
   return (
@@ -117,16 +148,16 @@ export function OrderReceiptModal({ data, open, onClose }: Props) {
       >
         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-neutral-200 px-4 py-3 sm:px-5">
           <h2 id={titleId} className="text-base font-semibold text-neutral-900">
-            {t("receipt.title")}
+            {RECEIPT_EN.title}
           </h2>
           <div className="flex items-center gap-2">
             <Button size="sm" variant="secondary" onPress={onPrint}>
               <Printer size={16} weight="bold" />
-              {t("receipt.print")}
+              Print
             </Button>
-            <Button size="sm" onPress={onDownload}>
+            <Button isDisabled={locked} size="sm" onPress={onDownload}>
               <DownloadSimple size={16} weight="bold" />
-              {t("receipt.downloadPdf")}
+              {locked ? "Downloaded" : "Download PDF"}
             </Button>
             <button
               aria-label={t("receipt.close")}
@@ -139,9 +170,31 @@ export function OrderReceiptModal({ data, open, onClose }: Props) {
           </div>
         </div>
 
+        <div className="shrink-0 border-b border-neutral-200 bg-neutral-50 px-4 py-3 sm:px-5">
+          <p className="mb-2 text-xs font-medium text-neutral-600">
+            {locked ? t("receipt.billToLocked") : t("receipt.billToEdit")}
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <TextField fullWidth isDisabled={locked} name="billToName" value={billToName} onChange={setBillToName}>
+              <Label>{t("receipt.billToCompany")}</Label>
+              <Input disabled={locked} placeholder={t("receipt.billToCompanyHint")} variant="secondary" />
+            </TextField>
+            <TextField fullWidth isDisabled={locked} name="billToEmail" value={billToEmail} onChange={setBillToEmail}>
+              <Label>{t("receipt.billToEmail")}</Label>
+              <Input
+                disabled={locked}
+                inputMode="email"
+                placeholder={t("receipt.billToEmailHint")}
+                type="email"
+                variant="secondary"
+              />
+            </TextField>
+          </div>
+        </div>
+
         <div className="overflow-auto bg-neutral-100 p-3 sm:p-6">
           <div ref={printRef} className="mx-auto max-w-[720px] bg-white px-6 py-8 sm:px-10 sm:py-10">
-            <ReceiptDocument data={data} />
+            <ReceiptDocument data={receipt} />
           </div>
         </div>
       </div>
@@ -150,19 +203,18 @@ export function OrderReceiptModal({ data, open, onClose }: Props) {
 }
 
 function ReceiptDocument({ data }: { data: ReceiptData }) {
-  const { t } = useI18n();
   return (
     <>
       <div className="bar -mx-6 mb-6 h-1.5 bg-black sm:-mx-10" />
       <div className="head flex items-start justify-between gap-6">
         <div>
-          <h1 className="title m-0 text-3xl font-bold tracking-tight sm:text-4xl">{t("receipt.title")}</h1>
+          <h1 className="title m-0 text-3xl font-bold tracking-tight sm:text-4xl">{RECEIPT_EN.title}</h1>
           <p className="meta mt-3 text-sm leading-relaxed text-neutral-800">
             <span className="block">
-              {t("receipt.number")} {data.receiptNo}
+              {RECEIPT_EN.number} {data.receiptNo}
             </span>
             <span className="block">
-              {t("receipt.datePaid")} {data.datePaid}
+              {RECEIPT_EN.datePaid} {data.datePaid}
             </span>
           </p>
         </div>
@@ -181,7 +233,7 @@ function ReceiptDocument({ data }: { data: ReceiptData }) {
           <p className="m-0">{COMPANY.email}</p>
         </div>
         <div>
-          <strong className="block font-semibold">{t("receipt.billTo")}</strong>
+          <strong className="block font-semibold">{RECEIPT_EN.billTo}</strong>
           {data.billToName ? <p className="m-0 mt-1">{data.billToName}</p> : null}
           {data.billToEmail ? <p className="m-0">{data.billToEmail}</p> : null}
           {!data.billToName && !data.billToEmail ? <p className="m-0 mt-1 text-neutral-500">—</p> : null}
@@ -189,27 +241,27 @@ function ReceiptDocument({ data }: { data: ReceiptData }) {
       </div>
 
       <p className="paid mt-8 text-lg font-bold">
-        {formatMoneyWithCode(data.amountCents, data.currency)} {t("receipt.paidOn")} {data.datePaid}
+        {formatMoneyWithCode(data.amountCents, data.currency)} {RECEIPT_EN.paidOn} {data.datePaid}
       </p>
 
       <table className="mt-6 w-full border-collapse text-sm">
         <thead>
           <tr>
-            <th className="border-t border-b border-neutral-300 py-2.5 pr-2 text-left font-semibold">{t("receipt.col.date")}</th>
+            <th className="border-t border-b border-neutral-300 py-2.5 pr-2 text-left font-semibold">{RECEIPT_EN.date}</th>
             <th className="border-t border-b border-neutral-300 py-2.5 pr-2 text-left font-semibold">
-              {t("receipt.col.description")}
+              {RECEIPT_EN.description}
             </th>
             <th className="num border-t border-b border-neutral-300 py-2.5 px-2 text-right font-semibold">
-              {t("receipt.col.qty")}
+              {RECEIPT_EN.qty}
             </th>
             <th className="num border-t border-b border-neutral-300 py-2.5 px-2 text-right font-semibold">
-              {t("receipt.col.unitPrice")}
+              {RECEIPT_EN.unitPrice}
             </th>
             <th className="num border-t border-b border-neutral-300 py-2.5 px-2 text-right font-semibold">
-              {t("receipt.col.fee")}
+              {RECEIPT_EN.fee}
             </th>
             <th className="num border-t border-b border-neutral-300 py-2.5 pl-2 text-right font-semibold">
-              {t("receipt.col.amount")}
+              {RECEIPT_EN.amount}
             </th>
           </tr>
         </thead>
@@ -229,15 +281,15 @@ function ReceiptDocument({ data }: { data: ReceiptData }) {
 
       <div className="totals ml-auto mt-5 w-56 text-sm">
         <div className="flex justify-between py-1">
-          <span>{t("receipt.subtotal")}</span>
+          <span>{RECEIPT_EN.subtotal}</span>
           <span>{formatMoney(data.amountCents, data.currency)}</span>
         </div>
         <div className="flex justify-between py-1">
-          <span>{t("receipt.total")}</span>
+          <span>{RECEIPT_EN.total}</span>
           <span>{formatMoney(data.amountCents, data.currency)}</span>
         </div>
         <div className="paid-row flex justify-between py-1 font-bold">
-          <span>{t("receipt.amountPaid")}</span>
+          <span>{RECEIPT_EN.amountPaid}</span>
           <span>{formatMoneyWithCode(data.amountCents, data.currency)}</span>
         </div>
       </div>
@@ -246,7 +298,7 @@ function ReceiptDocument({ data }: { data: ReceiptData }) {
         <span>
           {data.receiptNo} · {formatMoney(data.amountCents, data.currency)}
         </span>
-        <span>{t("receipt.page")}</span>
+        <span>{RECEIPT_EN.page}</span>
       </div>
     </>
   );

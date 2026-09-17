@@ -22,7 +22,7 @@ function pendingCheckout(): { orderNo: string; claim: string } | null {
 }
 
 export function ShopReturnPage() {
-  const { t, te, locale } = useI18n();
+  const { t, te } = useI18n();
   const { user, refresh } = useUser();
   const [params] = useSearchParams();
   const pending = pendingCheckout();
@@ -126,7 +126,6 @@ export function ShopReturnPage() {
                   receiptFromShopOrder(order, {
                     billToName: user?.display_name || user?.username,
                     billToEmail: order.email || user?.email,
-                    locale,
                   }),
                 )
               }
