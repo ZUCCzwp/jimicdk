@@ -5,6 +5,7 @@ import {
   List,
   ListChecks,
   MagnifyingGlass,
+  Megaphone,
   Moon,
   Prohibit,
   Question,
@@ -17,11 +18,12 @@ import {
   User,
   UserCircleCheck,
 } from "@phosphor-icons/react";
-import { useEffect, useRef, useState, type ComponentType } from "react";
+import { useCallback, useEffect, useRef, useState, type ComponentType } from "react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { AnimatedOutlet } from "@/components/AnimatedOutlet";
 import { QueueStatusChip } from "@/components/QueueStatusChip";
-import { Alert, Button, Surface } from "@heroui/react";
+import { SiteNotices, hasSiteNotices } from "@/components/SiteNotices";
+import { Button, Surface } from "@heroui/react";
 import { useAnnouncement } from "@/hooks/useApi";
 import { useNotifications } from "@/hooks/useApi";
 import { useUser } from "@/hooks/useUser";
@@ -61,8 +63,11 @@ export function AppShell() {
   const [cartQty, setCartQty] = useState(() => cartCount());
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [noticesOpen, setNoticesOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const noticesAvailable = hasSiteNotices(announcement, notifications);
+  const onNoticesOpenChange = useCallback((next: boolean) => setNoticesOpen(next), []);
 
   useEffect(() => {
     setTheme(theme);
@@ -86,6 +91,11 @@ export function AppShell() {
     return () => document.removeEventListener("pointerdown", onPointer);
   }, [menuOpen, userMenuOpen]);
 
+  function openNotices() {
+    setMenuOpen(false);
+    setNoticesOpen(true);
+  }
+
   return (
     <div className="flex min-h-[100dvh] flex-col text-foreground">
       <header className="app-header">
@@ -107,6 +117,17 @@ export function AppShell() {
                 {t(item.label)}
               </NavLink>
             ))}
+            <button
+              className={navButtonClass(noticesOpen)}
+              type="button"
+              onClick={openNotices}
+            >
+              <Megaphone size={24} weight="bold" />
+              {t("nav.notices")}
+              {noticesAvailable ? (
+                <span className="ml-0.5 size-1.5 rounded-full bg-[color:var(--accent)]" aria-hidden />
+              ) : null}
+            </button>
           </nav>
 
           <div className="flex shrink-0 items-center justify-end justify-self-end gap-1 sm:gap-2">
@@ -133,6 +154,14 @@ export function AppShell() {
                       {t(item.label)}
                     </NavLink>
                   ))}
+                  <button
+                    className={`${navButtonClass(noticesOpen)} w-full justify-start`}
+                    type="button"
+                    onClick={openNotices}
+                  >
+                    <Megaphone size={22} weight="bold" />
+                    {t("nav.notices")}
+                  </button>
                 </Surface>
               )}
             </div>
@@ -224,28 +253,12 @@ export function AppShell() {
         </div>
       </header>
 
-      {announcement?.enabled && announcement.content && (
-        <div className="mx-auto max-w-7xl px-5 pt-6 sm:px-8">
-          <Alert status="accent">
-            <Alert.Indicator />
-            <Alert.Content>
-              <Alert.Title>{t("announce")}</Alert.Title>
-              <Alert.Description>{announcement.content}</Alert.Description>
-            </Alert.Content>
-          </Alert>
-        </div>
-      )}
-      {notifications?.enabled && notifications.content && (
-        <div className="mx-auto max-w-7xl px-5 pt-6 sm:px-8">
-          <Alert status="default">
-            <Alert.Indicator />
-            <Alert.Content>
-              <Alert.Title>{t("notifications.title")}</Alert.Title>
-              <Alert.Description>{notifications.content}</Alert.Description>
-            </Alert.Content>
-          </Alert>
-        </div>
-      )}
+      <SiteNotices
+        announcement={announcement}
+        notifications={notifications}
+        open={noticesOpen}
+        onOpenChange={onNoticesOpenChange}
+      />
 
       <main
         className={
@@ -305,6 +318,11 @@ export function AppShell() {
                   <NavLink className="footer-link" to="/faq">
                     {t("nav.faq")}
                   </NavLink>
+                </li>
+                <li>
+                  <button className="footer-link" type="button" onClick={openNotices}>
+                    {t("nav.notices")}
+                  </button>
                 </li>
               </ul>
             </div>

@@ -212,6 +212,95 @@ details summary {
   color: color-mix(in oklab, var(--foreground) 78%, transparent);
 }
 
+.site-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.4rem 0.7rem;
+  border-radius: 0.65rem;
+  border: 1px solid color-mix(in oklab, var(--foreground) 10%, transparent);
+  background: color-mix(in oklab, var(--surface) 88%, transparent);
+}
+
+.site-notice--announce {
+  background: color-mix(in oklab, var(--accent) 12%, var(--surface));
+  border-color: color-mix(in oklab, var(--accent) 28%, transparent);
+}
+
+.site-notice--notice {
+  background: color-mix(in oklab, var(--foreground) 4%, var(--surface));
+}
+
+.site-notice__badge {
+  flex-shrink: 0;
+  margin-top: 0.05rem;
+  border-radius: 0.35rem;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.68rem;
+  font-weight: 650;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+  color: var(--accent-foreground);
+  background: color-mix(in oklab, var(--accent) 82%, black);
+}
+
+.site-notice--notice .site-notice__badge {
+  color: var(--foreground);
+  background: color-mix(in oklab, var(--foreground) 10%, transparent);
+}
+
+.site-notice__text {
+  margin: 0;
+  min-width: 0;
+  flex: 1;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: color-mix(in oklab, var(--foreground) 78%, transparent);
+  overflow-wrap: anywhere;
+}
+
+.site-notice-modal__item {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 0.85rem;
+  border: 1px solid color-mix(in oklab, var(--foreground) 10%, transparent);
+}
+
+.site-notice-modal__item--announce {
+  background: color-mix(in oklab, var(--accent) 12%, var(--surface));
+  border-color: color-mix(in oklab, var(--accent) 28%, transparent);
+}
+
+.site-notice-modal__item--notice {
+  background: color-mix(in oklab, var(--foreground) 4%, var(--surface));
+}
+
+.site-notice-modal__badge {
+  width: fit-content;
+  border-radius: 0.4rem;
+  padding: 0.15rem 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 650;
+  line-height: 1.3;
+  color: var(--accent-foreground);
+  background: color-mix(in oklab, var(--accent) 82%, black);
+}
+
+.site-notice-modal__item--notice .site-notice-modal__badge {
+  color: var(--foreground);
+  background: color-mix(in oklab, var(--foreground) 10%, transparent);
+}
+
+.site-notice-modal__text {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: color-mix(in oklab, var(--foreground) 82%, transparent);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
 .app-header {
   position: sticky;
   top: 0;
