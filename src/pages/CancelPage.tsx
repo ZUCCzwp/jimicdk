@@ -199,7 +199,7 @@ export function CancelPage() {
                 </Button>
               )}
               {result && (
-                <Button fullWidth size="lg" type="button" variant="secondary" onPress={() => navigate("/")}>
+                <Button fullWidth size="lg" type="button" variant="secondary" onPress={() => navigate("/redeem")}>
                   {t("cancel.resubmit")}
                 </Button>
               )}

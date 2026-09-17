@@ -37,7 +37,7 @@ type NavItem = { to: string; id: string; label: MsgKey; icon: ComponentType<{ si
 const nav: NavItem[] = [
   { to: "/shop", id: "shop", label: "nav.shop", icon: Storefront },
   { to: "/lookup", id: "lookup", label: "nav.lookup", icon: MagnifyingGlass },
-  { to: "/", id: "redeem", label: "nav.redeem", icon: Key },
+  { to: "/redeem", id: "redeem", label: "nav.redeem", icon: Key },
   { to: "/orders", id: "orders", label: "nav.orders", icon: ListChecks },
   { to: "/cancel", id: "cancel", label: "nav.cancel", icon: Prohibit },
   { to: "/subscription", id: "sub", label: "nav.sub", icon: UserCircleCheck },
@@ -45,7 +45,7 @@ const nav: NavItem[] = [
 ];
 
 function itemActive(item: NavItem, pathname: string) {
-  return item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
+  return pathname === item.to || pathname.startsWith(`${item.to}/`);
 }
 
 function navButtonClass(active: boolean) {
@@ -110,7 +110,7 @@ export function AppShell() {
               <NavLink
                 key={item.id}
                 className={navButtonClass(itemActive(item, location.pathname))}
-                end={item.to === "/"}
+                end={item.to !== "/shop"}
                 to={item.to}
               >
                 <item.icon size={24} weight="bold" />
@@ -147,7 +147,7 @@ export function AppShell() {
                     <NavLink
                       key={item.id}
                       className={`${navButtonClass(itemActive(item, location.pathname))} w-full justify-start`}
-                      end={item.to === "/"}
+                      end={item.to !== "/shop"}
                       to={item.to}
                     >
                       <item.icon size={22} weight="bold" />

@@ -204,7 +204,7 @@ export function OrdersPage() {
           <p className="text-lg font-semibold">{t("orders.emptyTitle")}</p>
           <p className="mt-2 text-muted">{user ? t("orders.emptyDesc") : t("orders.emptyGuest")}</p>
           <div className="mt-5 flex flex-wrap gap-3">
-            <Button onPress={() => navigate("/")}>{t("orders.goRedeem")}</Button>
+            <Button onPress={() => navigate("/redeem")}>{t("orders.goRedeem")}</Button>
             {!user && (
               <Button variant="secondary" onPress={() => navigate("/login")}>
                 {t("nav.login")}

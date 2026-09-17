@@ -133,7 +133,7 @@ export function ShopReturnPage() {
               <Receipt size={18} weight="bold" />
               {t("receipt.view")}
             </Button>
-            <Link className="button button--secondary" to="/">
+            <Link className="button button--secondary" to="/redeem">
               {t("shop.return.redeem")}
             </Link>
             <Link className="button button--ghost" to="/shop">

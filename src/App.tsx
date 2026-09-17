@@ -81,7 +81,8 @@ export default function App() {
             <Route path="reduction-code" element={<AdminReductionCodePage />} />
           </Route>
           <Route element={<AppShell />}>
-            <Route path="/" element={<RedeemPage />} />
+            <Route path="/" element={<Navigate to="/shop" replace />} />
+            <Route path="/redeem" element={<RedeemPage />} />
             <Route path="/shop/return" element={<ShopReturnPage />} />
             <Route path="/shop/:slug" element={<ShopProductPage />} />
             <Route path="/shop" element={<ShopPage />} />
@@ -94,7 +95,7 @@ export default function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/account/wallet/return" element={<WalletReturnPage />} />
             <Route path="/account" element={<AccountPage />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<Navigate to="/shop" replace />} />
           </Route>
         </Routes>
       </Suspense>

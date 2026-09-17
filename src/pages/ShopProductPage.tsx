@@ -2,7 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Minus, Plus, ShoppingCart } from "@phosphor-icons/react";
 import { api } from "@/api/client";
-import { PLAN_LABEL, type PlanType, type ShopCatalogResp, type ShopProduct } from "@/api/types";
+import {
+  PLAN_LABEL,
+  type PlanType,
+  type ShopCatalogResp,
+  type ShopProduct,
+  type ShopReductionCodePreviewResp,
+} from "@/api/types";
 import { useUser } from "@/hooks/useUser";
 import { useI18n } from "@/i18n";
 import { guestCheckoutErrorKey, normalizeClaim, validateGuestCheckout } from "@/lib/guestCheckout";
@@ -34,6 +40,8 @@ export function ShopProductPage() {
   const [qty, setQty] = useState(1);
   const [email, setEmail] = useState("");
   const [claim, setClaim] = useState("");
+  const [discountCode, setDiscountCode] = useState("");
+  const [discountPreview, setDiscountPreview] = useState<ShopReductionCodePreviewResp | null>(null);
   const [busy, setBusy] = useState<"cart" | "buy" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -60,6 +68,8 @@ export function ShopProductPage() {
     setQty(1);
     setNotice(null);
     setError(null);
+    setDiscountCode("");
+    setDiscountPreview(null);
   }, [slug]);
 
   const product = useMemo(() => {
@@ -76,10 +86,36 @@ export function ShopProductPage() {
     [product, cartTick],
   );
   const cartRemaining = product ? Math.max(0, Math.min(5, product.stock) - inCartQty) : 0;
+  const subtotal = product ? product.price_cents * qty : 0;
+  const discountFinalTotal = discountPreview?.final_cents ?? subtotal;
+  const discountCents = discountPreview?.discount_cents ?? 0;
 
   useEffect(() => {
     if (qty > maxQty) setQty(Math.max(1, maxQty));
   }, [maxQty, qty]);
+
+  useEffect(() => {
+    const code = discountCode.trim();
+    if (!code || subtotal < 1) {
+      setDiscountPreview(null);
+      return;
+    }
+    let cancelled = false;
+    const id = window.setTimeout(async () => {
+      try {
+        const res = await api.shopReductionCodePreview(subtotal, code);
+        if (cancelled) return;
+        setDiscountPreview(res);
+      } catch {
+        if (cancelled) return;
+        setDiscountPreview(null);
+      }
+    }, 400);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(id);
+    };
+  }, [discountCode, subtotal]);
 
   async function buyNow(item: ShopProduct, quantity: number) {
     setBusy("buy");
@@ -97,6 +133,7 @@ export function ShopProductPage() {
       const res = await api.shopCheckout([{ productId: item.id, quantity }], {
         email: email.trim() || undefined,
         claim: guest ? normalizeClaim(claim) : undefined,
+        discountCode: discountCode.trim() || undefined,
       });
       persistCheckout(res.order_no, res.claim);
       window.location.assign(res.checkout_url);
@@ -256,6 +293,33 @@ export function ShopProductPage() {
               <p className="mt-2 text-sm text-muted">{t("shop.claimHint")}</p>
             </>
           ) : null}
+
+          <div className="mt-6 rounded-2xl border border-border/80 px-4 py-3 text-sm">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-muted">{t("shop.discountCode")}</span>
+              {discountCode.trim() ? (
+                discountPreview === null ? (
+                  <span className="text-muted">{t("shop.discountChecking")}</span>
+                ) : discountPreview.valid ? (
+                  <span className="font-medium text-accent">-{usd(discountCents)}</span>
+                ) : (
+                  <span className="font-medium text-danger">{t("shop.discountInvalid")}</span>
+                )
+              ) : (
+                <span className="text-muted">{t("shop.discountOptional")}</span>
+              )}
+            </div>
+            <TextField className="mt-3" fullWidth name="discountCode" value={discountCode} onChange={setDiscountCode}>
+              <Label className="sr-only">{t("shop.discountCode")}</Label>
+              <Input autoComplete="off" placeholder={t("shop.discountPlaceholder")} variant="secondary" />
+            </TextField>
+            {discountCode.trim() && discountPreview?.valid ? (
+              <div className="mt-3 flex items-center justify-between gap-3">
+                <span className="text-muted">{t("shop.payAmount")}</span>
+                <span className="font-semibold">{usd(discountFinalTotal)}</span>
+              </div>
+            ) : null}
+          </div>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Button

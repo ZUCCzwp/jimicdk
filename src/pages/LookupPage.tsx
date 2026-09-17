@@ -287,7 +287,7 @@ function PurchaseRow({
           </Button>
         ) : null}
         {paid && codes[0] && (
-          <Link className="button button--ghost text-sm" to="/">
+          <Link className="button button--ghost text-sm" to="/redeem">
             {t("shop.goRedeem")}
           </Link>
         )}
