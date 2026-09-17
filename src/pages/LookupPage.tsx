@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { MagnifyingGlass, Storefront } from "@phosphor-icons/react";
+import { MagnifyingGlass, Receipt, Storefront } from "@phosphor-icons/react";
 import { api } from "@/api/client";
 import type { ShopOrderResp } from "@/api/types";
+import { OrderReceiptModal } from "@/components/OrderReceipt";
 import { useUser } from "@/hooks/useUser";
 import { useI18n } from "@/i18n";
+import { receiptFromPurchase, receiptFromShopOrder, type ReceiptData } from "@/lib/receipt";
 import { getPurchases, upsertOrder, upsertPurchase, type StoredPurchase } from "@/lib/storage";
 import { Alert, Button, Input, Label, Spinner, Surface, TextField } from "@heroui/react";
 
@@ -29,7 +31,7 @@ function rememberOrder(order: ShopOrderResp) {
 }
 
 export function LookupPage() {
-  const { t, te } = useI18n();
+  const { t, te, locale } = useI18n();
   const { user } = useUser();
   const [mine, setMine] = useState<ShopOrderResp[]>([]);
   const [localPurchases, setLocalPurchases] = useState<StoredPurchase[]>(() => getPurchases());
@@ -39,6 +41,7 @@ export function LookupPage() {
   const [lookupEmail, setLookupEmail] = useState("");
   const [lookupClaim, setLookupClaim] = useState("");
   const [lookedUp, setLookedUp] = useState<ShopOrderResp | null>(null);
+  const [receipt, setReceipt] = useState<ReceiptData | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -58,6 +61,26 @@ export function LookupPage() {
       cancelled = true;
     };
   }, [user]);
+
+  function openOrderReceipt(order: ShopOrderResp) {
+    setReceipt(
+      receiptFromShopOrder(order, {
+        billToName: user?.display_name || user?.username,
+        billToEmail: order.email || user?.email || lookupEmail.trim() || undefined,
+        locale,
+      }),
+    );
+  }
+
+  function openPurchaseReceipt(purchase: StoredPurchase) {
+    setReceipt(
+      receiptFromPurchase(purchase, {
+        billToName: user?.display_name || user?.username,
+        billToEmail: user?.email || lookupEmail.trim() || undefined,
+        locale,
+      }),
+    );
+  }
 
   async function onQuery() {
     if (!lookupNo.trim()) return;
@@ -136,6 +159,12 @@ export function LookupPage() {
             {lookedUp.status === "paid" && lookedUp.codes?.length ? (
               <p className="mt-3 break-all font-mono text-sm">{lookedUp.codes.join("  ")}</p>
             ) : null}
+            {lookedUp.status === "paid" ? (
+              <Button className="mt-3" size="sm" variant="secondary" onPress={() => openOrderReceipt(lookedUp)}>
+                <Receipt size={16} weight="bold" />
+                {t("receipt.view")}
+              </Button>
+            ) : null}
           </div>
         )}
       </Surface>
@@ -160,6 +189,7 @@ export function LookupPage() {
                   slug={order.items?.map((item) => item.product_slug).join(" + ") || order.product_slug}
                   time={order.paid_at || order.created_at}
                   title={order.order_no}
+                  onReceipt={order.status === "paid" ? () => openOrderReceipt(order) : undefined}
                 />
               ))}
             </ul>
@@ -177,11 +207,16 @@ export function LookupPage() {
                 slug={item.productSlug}
                 time={item.paidAt}
                 title={item.orderNo}
+                onReceipt={item.status === "paid" ? () => openPurchaseReceipt(item) : undefined}
               />
             ))}
           </ul>
         )}
       </Surface>
+
+      {receipt ? (
+        <OrderReceiptModal data={receipt} open onClose={() => setReceipt(null)} />
+      ) : null}
     </section>
   );
 }
@@ -193,6 +228,7 @@ function PurchaseRow({
   time,
   paid,
   codes,
+  onReceipt,
 }: {
   title: string;
   slug: string;
@@ -200,6 +236,7 @@ function PurchaseRow({
   time: string;
   paid: boolean;
   codes: string[];
+  onReceipt?: () => void;
 }) {
   const { t } = useI18n();
   return (
@@ -211,11 +248,17 @@ function PurchaseRow({
         </p>
         {paid && codes.length > 0 && <p className="mt-2 break-all font-mono text-sm">{codes.join("  ")}</p>}
       </div>
-      <div className="flex shrink-0 items-center gap-3">
+      <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 sm:gap-3">
         <div className="text-right">
           <p className="font-medium">{amount}</p>
           <p className="mt-1 text-xs text-muted">{paid ? t("shop.status.paid") : t("shop.status.pending")}</p>
         </div>
+        {onReceipt ? (
+          <Button size="sm" variant="secondary" onPress={onReceipt}>
+            <Receipt size={16} weight="bold" />
+            {t("receipt.view")}
+          </Button>
+        ) : null}
         {paid && codes[0] && (
           <Link className="button button--ghost text-sm" to="/">
             {t("shop.goRedeem")}

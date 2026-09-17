@@ -20,8 +20,8 @@ import {
 import { useEffect, useRef, useState, type ComponentType } from "react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { AnimatedOutlet } from "@/components/AnimatedOutlet";
-import { Alert, Button, Chip, Surface } from "@heroui/react";
-import { useQueue } from "@/hooks/useApi";
+import { QueueStatusChip } from "@/components/QueueStatusChip";
+import { Alert, Button, Surface } from "@heroui/react";
 import { useAnnouncement } from "@/hooks/useApi";
 import { useNotifications } from "@/hooks/useApi";
 import { useUser } from "@/hooks/useUser";
@@ -50,46 +50,9 @@ function navButtonClass(active: boolean) {
   return `button text-base ${active ? "button--secondary" : "button--ghost"}`;
 }
 
-type QueueLight = "green" | "yellow" | "red";
-
-function queueLight(count: number): QueueLight {
-  if (count <= 0) return "green";
-  if (count <= 5) return "yellow";
-  return "red";
-}
-
-function QueueTrafficLight({
-  level,
-  live,
-  loading,
-}: {
-  level: QueueLight | null;
-  live: boolean;
-  loading?: boolean;
-}) {
-  if (loading || !level) {
-    return (
-      <span className="queue-light queue-light--loading" aria-hidden>
-        <span className="queue-light__dot queue-light__dot--red" />
-        <span className="queue-light__dot queue-light__dot--yellow is-on" />
-        <span className="queue-light__dot queue-light__dot--green" />
-      </span>
-    );
-  }
-
-  return (
-    <span className={`queue-light ${live ? "queue-light--live" : ""}`} aria-hidden>
-      <span className={`queue-light__dot queue-light__dot--red ${level === "red" ? "is-on" : ""}`} />
-      <span className={`queue-light__dot queue-light__dot--yellow ${level === "yellow" ? "is-on" : ""}`} />
-      <span className={`queue-light__dot queue-light__dot--green ${level === "green" ? "is-on" : ""}`} />
-    </span>
-  );
-}
-
 export function AppShell() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { data: queue, live: queueLive } = useQueue();
   const announcement = useAnnouncement();
   const notifications = useNotifications();
   const { user, logout } = useUser();
@@ -122,16 +85,6 @@ export function AppShell() {
     document.addEventListener("pointerdown", onPointer);
     return () => document.removeEventListener("pointerdown", onPointer);
   }, [menuOpen, userMenuOpen]);
-
-  const queueLevel = queue ? queueLight(queue.pending_count) : null;
-  const queueHint =
-    queueLevel === "green"
-      ? t("nav.queueIdle")
-      : queueLevel === "yellow"
-        ? t("nav.queueModerate")
-        : queueLevel === "red"
-          ? t("nav.queueBusy")
-          : "";
 
   return (
     <div className="flex min-h-[100dvh] flex-col text-foreground">
@@ -184,23 +137,7 @@ export function AppShell() {
               )}
             </div>
 
-            <Chip
-              className="hidden xl:inline-flex shrink-0"
-              size="lg"
-              title={
-                queue && queueLevel
-                  ? `${queueHint} · ${t("nav.queue", { count: queue.pending_count })}`
-                  : t("nav.queueLoading")
-              }
-              variant="soft"
-            >
-              <span className="flex items-center gap-2">
-                <QueueTrafficLight level={queueLevel} live={queueLive} loading={!queue} />
-                <span className="queue-count">
-                  {queue ? t("nav.queue", { count: queue.pending_count }) : t("nav.queueLoading")}
-                </span>
-              </span>
-            </Chip>
+            <QueueStatusChip />
             <NavLink
               className={`button relative shrink-0 text-base ${location.pathname === "/cart" ? "button--secondary" : "button--ghost"}`}
               to="/cart"

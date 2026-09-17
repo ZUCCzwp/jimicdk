@@ -47,31 +47,38 @@ export function useNotifications() {
   return data;
 }
 
-const QUEUE_POLL_MS = 3000;
+const QUEUE_POLL_MS = 8000;
 
-function applyQueueStatus(
-  parsed: QueueStatusResp,
-  setData: (value: QueueStatusResp) => void,
-) {
-  if (typeof parsed.pending_count === "number") {
-    setData(parsed);
-  }
+function queueUnchanged(prev: QueueStatusResp | null, next: QueueStatusResp): boolean {
+  return (
+    prev != null &&
+    prev.pending_count === next.pending_count &&
+    prev.status === next.status
+  );
 }
 
 export function useQueue() {
   const [data, setData] = useState<QueueStatusResp | null>(null);
   const [live, setLive] = useState(false);
+  const dataRef = useRef<QueueStatusResp | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     let pollTimer: ReturnType<typeof setInterval> | null = null;
     let source: EventSource | null = null;
 
+    const apply = (next: QueueStatusResp) => {
+      if (typeof next.pending_count !== "number") return;
+      if (queueUnchanged(dataRef.current, next)) return;
+      dataRef.current = next;
+      setData(next);
+    };
+
     const fetchStatus = () =>
       api
         .queueStatus()
         .then((next) => {
-          if (!cancelled) applyQueueStatus(next, setData);
+          if (!cancelled) apply(next);
         })
         .catch(() => {});
 
@@ -83,7 +90,7 @@ export function useQueue() {
     };
 
     const startPolling = () => {
-      stopPolling();
+      if (pollTimer || cancelled) return;
       pollTimer = setInterval(fetchStatus, QUEUE_POLL_MS);
     };
 
@@ -95,8 +102,11 @@ export function useQueue() {
     const onEvent = (ev: MessageEvent<string>) => {
       if (!ev.data || ev.data === "{}") return;
       try {
-        applyQueueStatus(JSON.parse(ev.data) as QueueStatusResp, setData);
-        if (!cancelled) setLive(true);
+        apply(JSON.parse(ev.data) as QueueStatusResp);
+        if (!cancelled) {
+          setLive(true);
+          stopPolling();
+        }
       } catch {
         // ignore keep-alive / malformed frames
       }
@@ -107,11 +117,15 @@ export function useQueue() {
     source.onmessage = onEvent;
 
     source.onopen = () => {
-      if (!cancelled) setLive(true);
+      if (cancelled) return;
+      setLive(true);
+      stopPolling();
     };
 
     source.onerror = () => {
-      if (!cancelled) setLive(false);
+      if (cancelled) return;
+      setLive(false);
+      startPolling();
     };
 
     return () => {
@@ -179,6 +193,16 @@ export function useTaskPoll(codes: string[]) {
         map.set(item.cdk_code, item);
       }
       const next = list.map((code) => map.get(code)).filter((item): item is TaskView => Boolean(item));
+      const prev = tasksRef.current;
+      const same =
+        prev.length === next.length &&
+        prev.every(
+          (item, i) =>
+            item.cdk_code === next[i]?.cdk_code &&
+            item.task_status === next[i]?.task_status &&
+            item.updated_at === next[i]?.updated_at,
+        );
+      if (same) return;
       tasksRef.current = next;
       setTasks(next);
     };

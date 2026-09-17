@@ -282,6 +282,7 @@ export type ShopOrderResp = {
   amount_cents: number;
   currency: string;
   status: string;
+  email?: string;
   items?: ShopOrderLine[];
   codes?: string[];
   created_at: string;

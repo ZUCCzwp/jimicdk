@@ -10,6 +10,23 @@ export default defineConfig({
       "@": fileURLToPath(new URL("./src", import.meta.url)),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return;
+          if (id.includes("@heroui") || id.includes("@react-aria") || id.includes("@react-stately")) {
+            return "heroui";
+          }
+          if (id.includes("@phosphor-icons")) return "icons";
+          if (id.includes("react-router")) return "router";
+          if (id.includes("react-dom") || id.includes("/react/") || id.endsWith("/react")) {
+            return "react";
+          }
+        },
+      },
+    },
+  },
   server: {
     port: 5173,
     proxy: {
