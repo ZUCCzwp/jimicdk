@@ -52,72 +52,35 @@ body {
     color 0.35s ease;
 }
 
-@property --gx1 {
-  syntax: "<percentage>";
-  inherits: false;
-  initial-value: -6%;
-}
-@property --gy1 {
-  syntax: "<percentage>";
-  inherits: false;
-  initial-value: -10%;
-}
-@property --gx2 {
-  syntax: "<percentage>";
-  inherits: false;
-  initial-value: 108%;
-}
-@property --gy2 {
-  syntax: "<percentage>";
-  inherits: false;
-  initial-value: -4%;
-}
-@property --gx3 {
-  syntax: "<percentage>";
-  inherits: false;
-  initial-value: 82%;
-}
-@property --gy3 {
-  syntax: "<percentage>";
-  inherits: false;
-  initial-value: 112%;
-}
-
+/* Atmosphere: paint the glow once, then drift with transform only (compositor-friendly).
+   Never animate gradient stops / custom props — that forces full-layer repaint every frame. */
 body::before {
   content: "";
   position: fixed;
-  inset: -8%;
+  inset: -12%;
   z-index: -2;
   pointer-events: none;
-  will-change: auto;
   background:
-    radial-gradient(1100px 580px at var(--gx1) var(--gy1), var(--glow-teal), transparent 58%),
-    radial-gradient(900px 520px at var(--gx2) var(--gy2), var(--glow-slate), transparent 54%),
-    radial-gradient(760px 500px at var(--gx3) var(--gy3), var(--glow-mist), transparent 58%),
+    radial-gradient(ellipse 48% 36% at 16% 10%, var(--glow-teal), transparent 62%),
+    radial-gradient(ellipse 40% 34% at 90% 6%, var(--glow-slate), transparent 58%),
+    radial-gradient(ellipse 36% 32% at 78% 94%, var(--glow-mist), transparent 60%),
     var(--page-tint);
+  transform: translate3d(0, 0, 0);
   animation: glow-drift 48s ease-in-out infinite;
+  backface-visibility: hidden;
 }
 
 @keyframes glow-drift {
   0%,
   100% {
-    --gx1: -6%;
-    --gy1: -10%;
-    --gx2: 108%;
-    --gy2: -4%;
-    --gx3: 82%;
-    --gy3: 112%;
+    transform: translate3d(-1.6%, -1.2%, 0);
   }
   50% {
-    --gx1: 8%;
-    --gy1: 8%;
-    --gx2: 94%;
-    --gy2: 10%;
-    --gx3: 72%;
-    --gy3: 98%;
+    transform: translate3d(2.2%, 1.8%, 0);
   }
 }
 
+/* Static grid: one paint; no mask (mask + large layers is costly on Retina). */
 body::after {
   content: "";
   position: fixed;
@@ -128,16 +91,17 @@ body::after {
     repeating-linear-gradient(
       to right,
       var(--grid-line) 0 1px,
-      transparent 1px 56px
+      transparent 1px 64px
     ),
     repeating-linear-gradient(
       to bottom,
       var(--grid-line) 0 1px,
-      transparent 1px 56px
+      transparent 1px 64px
     );
-  background-size: 56px 56px, 56px 56px;
-  opacity: calc(var(--atmosphere-overlay) * 0.55);
-  mask-image: radial-gradient(140% 110% at 50% 28%, #000 48%, transparent 92%);
+  background-size: 64px 64px;
+  opacity: calc(var(--atmosphere-overlay) * 0.4);
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 @keyframes page-in {
@@ -163,7 +127,6 @@ details summary {
   body::before {
     animation: none;
     inset: 0;
-    opacity: 1;
     transform: none;
   }
 }
