@@ -172,47 +172,6 @@ export function upsertPurchase(purchase: StoredPurchase): StoredPurchase[] {
   return next;
 }
 
-const RECEIPT_FINALS = "jimicdk.receiptFinals";
-
-export type FinalizedReceipt = {
-  orderNo: string;
-  billToName: string;
-  billToEmail: string;
-  downloadedAt: string;
-};
-
-function getReceiptFinals(): FinalizedReceipt[] {
-  try {
-    const raw = localStorage.getItem(RECEIPT_FINALS);
-    return raw ? (JSON.parse(raw) as FinalizedReceipt[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-export function getFinalizedReceipt(orderNo: string): FinalizedReceipt | null {
-  const key = orderNo.trim();
-  if (!key) return null;
-  return getReceiptFinals().find((item) => item.orderNo === key) ?? null;
-}
-
-export function finalizeReceipt(input: {
-  orderNo: string;
-  billToName: string;
-  billToEmail: string;
-}): FinalizedReceipt {
-  const saved: FinalizedReceipt = {
-    orderNo: input.orderNo.trim(),
-    billToName: input.billToName.trim(),
-    billToEmail: input.billToEmail.trim(),
-    downloadedAt: new Date().toISOString(),
-  };
-  const next = getReceiptFinals().filter((item) => item.orderNo !== saved.orderNo);
-  next.unshift(saved);
-  localStorage.setItem(RECEIPT_FINALS, JSON.stringify(next.slice(0, 100)));
-  return saved;
-}
-
 const CART = "jimicdk.cart";
 const CART_CHANGED = "jimicdk-cart-changed";
 

@@ -13,11 +13,13 @@ export type ReceiptLine = {
 
 export type ReceiptData = {
   receiptNo: string;
+  claim?: string;
   datePaid: string;
   currency: string;
   amountCents: number;
   billToName?: string;
   billToEmail?: string;
+  receiptLocked?: boolean;
   lines: ReceiptLine[];
 };
 
@@ -113,13 +115,18 @@ export function receiptFromShopOrder(
 ): ReceiptData {
   const paidRaw = order.paid_at || order.created_at;
   const datePaid = formatReceiptDate(paidRaw);
+  const locked = Boolean(order.receipt_downloaded_at);
   return {
     receiptNo: order.order_no,
+    claim: order.claim || undefined,
     datePaid,
     currency: order.currency || "USD",
     amountCents: order.amount_cents,
-    billToName: opts?.billToName,
-    billToEmail: opts?.billToEmail || order.email,
+    billToName: locked ? order.bill_to_name || undefined : order.bill_to_name || opts?.billToName,
+    billToEmail: locked
+      ? order.bill_to_email || undefined
+      : order.bill_to_email || opts?.billToEmail || order.email,
+    receiptLocked: locked,
     lines: linesFromOrder(order, datePaid),
   };
 }
@@ -132,11 +139,13 @@ export function receiptFromPurchase(
   const qty = 1;
   return {
     receiptNo: purchase.orderNo,
+    claim: purchase.claim || undefined,
     datePaid,
     currency: purchase.currency || "USD",
     amountCents: purchase.amountCents,
     billToName: opts?.billToName,
     billToEmail: opts?.billToEmail,
+    receiptLocked: false,
     lines: [
       {
         date: datePaid,

@@ -283,6 +283,9 @@ export type ShopOrderResp = {
   currency: string;
   status: string;
   email?: string;
+  bill_to_name?: string;
+  bill_to_email?: string;
+  receipt_downloaded_at?: string;
   items?: ShopOrderLine[];
   codes?: string[];
   created_at: string;

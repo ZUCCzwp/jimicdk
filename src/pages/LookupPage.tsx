@@ -213,7 +213,36 @@ export function LookupPage() {
       </Surface>
 
       {receipt ? (
-        <OrderReceiptModal data={receipt} open onClose={() => setReceipt(null)} />
+        <OrderReceiptModal
+          data={receipt}
+          open
+          onClose={() => setReceipt(null)}
+          onFinalized={(next) => {
+            setReceipt(next);
+            setMine((list) =>
+              list.map((order) =>
+                order.order_no === next.receiptNo
+                  ? {
+                      ...order,
+                      bill_to_name: next.billToName,
+                      bill_to_email: next.billToEmail,
+                      receipt_downloaded_at: new Date().toISOString(),
+                    }
+                  : order,
+              ),
+            );
+            setLookedUp((order) =>
+              order && order.order_no === next.receiptNo
+                ? {
+                    ...order,
+                    bill_to_name: next.billToName,
+                    bill_to_email: next.billToEmail,
+                    receipt_downloaded_at: new Date().toISOString(),
+                  }
+                : order,
+            );
+          }}
+        />
       ) : null}
     </section>
   );

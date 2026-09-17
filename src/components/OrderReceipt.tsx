@@ -1,45 +1,63 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { DownloadSimple, Printer, X } from "@phosphor-icons/react";
 import { Button, Input, Label, TextField } from "@heroui/react";
+import { api } from "@/api/client";
+import { ApiError } from "@/api/types";
 import { useI18n } from "@/i18n";
 import {
   COMPANY,
   RECEIPT_EN,
   formatMoney,
   formatMoneyWithCode,
+  receiptFromShopOrder,
   type ReceiptData,
 } from "@/lib/receipt";
 import { downloadReceiptPdf } from "@/lib/receiptPdf";
-import { finalizeReceipt, getFinalizedReceipt } from "@/lib/storage";
 
 type Props = {
   data: ReceiptData;
   open: boolean;
   onClose: () => void;
+  onFinalized?: (next: ReceiptData) => void;
 };
 
-export function OrderReceiptModal({ data, open, onClose }: Props) {
-  const { t } = useI18n();
+export function OrderReceiptModal({ data, open, onClose, onFinalized }: Props) {
+  const { t, te } = useI18n();
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const printRef = useRef<HTMLDivElement>(null);
   const [billToName, setBillToName] = useState(data.billToName ?? "");
   const [billToEmail, setBillToEmail] = useState(data.billToEmail ?? "");
-  const [locked, setLocked] = useState(false);
+  const [locked, setLocked] = useState(Boolean(data.receiptLocked));
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
-    const saved = getFinalizedReceipt(data.receiptNo);
-    if (saved) {
-      setBillToName(saved.billToName);
-      setBillToEmail(saved.billToEmail);
-      setLocked(true);
-      return;
-    }
     setBillToName(data.billToName ?? "");
     setBillToEmail(data.billToEmail ?? "");
-    setLocked(false);
-  }, [open, data.billToName, data.billToEmail, data.receiptNo]);
+    setLocked(Boolean(data.receiptLocked));
+    setError(null);
+  }, [open, data.billToName, data.billToEmail, data.receiptLocked, data.receiptNo]);
+
+  useEffect(() => {
+    if (!open || !data.claim || data.receiptLocked) return;
+    let cancelled = false;
+    api
+      .shopOrder(data.receiptNo, data.claim)
+      .then((order) => {
+        if (cancelled || !order.receipt_downloaded_at) return;
+        const next = receiptFromShopOrder(order);
+        setBillToName(next.billToName ?? "");
+        setBillToEmail(next.billToEmail ?? "");
+        setLocked(true);
+        onFinalized?.(next);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [open, data.claim, data.receiptNo, data.receiptLocked, onFinalized]);
 
   useEffect(() => {
     if (!open) return;
@@ -61,6 +79,7 @@ export function OrderReceiptModal({ data, open, onClose }: Props) {
     ...data,
     billToName: billToName.trim() || undefined,
     billToEmail: billToEmail.trim() || undefined,
+    receiptLocked: locked,
   };
 
   function onPrint() {
@@ -105,31 +124,56 @@ export function OrderReceiptModal({ data, open, onClose }: Props) {
     }, 250);
   }
 
-  function onDownload() {
-    if (locked) return;
-    downloadReceiptPdf(receipt, {
-      receipt: RECEIPT_EN.title,
-      receiptNumber: RECEIPT_EN.number,
-      datePaid: RECEIPT_EN.datePaid,
-      billTo: RECEIPT_EN.billTo,
-      paidOn: RECEIPT_EN.paidOn,
-      date: RECEIPT_EN.date,
-      description: RECEIPT_EN.description,
-      qty: RECEIPT_EN.qty,
-      unitPrice: RECEIPT_EN.unitPrice,
-      fee: RECEIPT_EN.fee,
-      amount: RECEIPT_EN.amount,
-      subtotal: RECEIPT_EN.subtotal,
-      total: RECEIPT_EN.total,
-      amountPaid: RECEIPT_EN.amountPaid,
-      page: RECEIPT_EN.page,
-    });
-    finalizeReceipt({
-      orderNo: data.receiptNo,
-      billToName: billToName.trim(),
-      billToEmail: billToEmail.trim(),
-    });
-    setLocked(true);
+  async function onDownload() {
+    if (locked || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const order = await api.shopFinalizeReceipt({
+        order_no: data.receiptNo,
+        claim: data.claim,
+        bill_to_name: billToName.trim(),
+        bill_to_email: billToEmail.trim(),
+      });
+      const next = receiptFromShopOrder(order);
+      setBillToName(next.billToName ?? "");
+      setBillToEmail(next.billToEmail ?? "");
+      setLocked(true);
+      onFinalized?.(next);
+      downloadReceiptPdf(
+        {
+          ...next,
+          billToName: next.billToName,
+          billToEmail: next.billToEmail,
+        },
+        {
+          receipt: RECEIPT_EN.title,
+          receiptNumber: RECEIPT_EN.number,
+          datePaid: RECEIPT_EN.datePaid,
+          billTo: RECEIPT_EN.billTo,
+          paidOn: RECEIPT_EN.paidOn,
+          date: RECEIPT_EN.date,
+          description: RECEIPT_EN.description,
+          qty: RECEIPT_EN.qty,
+          unitPrice: RECEIPT_EN.unitPrice,
+          fee: RECEIPT_EN.fee,
+          amount: RECEIPT_EN.amount,
+          subtotal: RECEIPT_EN.subtotal,
+          total: RECEIPT_EN.total,
+          amountPaid: RECEIPT_EN.amountPaid,
+          page: RECEIPT_EN.page,
+        },
+      );
+    } catch (err) {
+      if (err instanceof ApiError && err.errorCode === "receipt_locked") {
+        setLocked(true);
+        setError(t("receipt.billToLocked"));
+      } else {
+        setError(te(err, "receipt.finalizeFailed"));
+      }
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -155,7 +199,7 @@ export function OrderReceiptModal({ data, open, onClose }: Props) {
               <Printer size={16} weight="bold" />
               Print
             </Button>
-            <Button isDisabled={locked} size="sm" onPress={onDownload}>
+            <Button isDisabled={locked || busy} isPending={busy} size="sm" onPress={() => void onDownload()}>
               <DownloadSimple size={16} weight="bold" />
               {locked ? "Downloaded" : "Download PDF"}
             </Button>
@@ -174,6 +218,7 @@ export function OrderReceiptModal({ data, open, onClose }: Props) {
           <p className="mb-2 text-xs font-medium text-neutral-600">
             {locked ? t("receipt.billToLocked") : t("receipt.billToEdit")}
           </p>
+          {error ? <p className="mb-2 text-xs text-red-600">{error}</p> : null}
           <div className="grid gap-3 sm:grid-cols-2">
             <TextField fullWidth isDisabled={locked} name="billToName" value={billToName} onChange={setBillToName}>
               <Label>{t("receipt.billToCompany")}</Label>

@@ -162,7 +162,26 @@ export function ShopReturnPage() {
         </div>
       )}
 
-      {receipt ? <OrderReceiptModal data={receipt} open onClose={() => setReceipt(null)} /> : null}
+      {receipt ? (
+        <OrderReceiptModal
+          data={receipt}
+          open
+          onClose={() => setReceipt(null)}
+          onFinalized={(next) => {
+            setReceipt(next);
+            setOrder((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    bill_to_name: next.billToName,
+                    bill_to_email: next.billToEmail,
+                    receipt_downloaded_at: new Date().toISOString(),
+                  }
+                : prev,
+            );
+          }}
+        />
+      ) : null}
     </Surface>
   );
 }

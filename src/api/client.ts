@@ -333,4 +333,21 @@ export const api = {
   shopMine() {
     return request<ShopOrdersResp>("/shop/mine", { user: true });
   },
+  shopFinalizeReceipt(body: {
+    order_no: string;
+    claim?: string;
+    bill_to_name?: string;
+    bill_to_email?: string;
+  }) {
+    return request<ShopOrderResp>("/shop/receipt", {
+      method: "POST",
+      user: "optional",
+      body: JSON.stringify({
+        order_no: body.order_no,
+        claim: body.claim ?? "",
+        bill_to_name: body.bill_to_name ?? "",
+        bill_to_email: body.bill_to_email ?? "",
+      }),
+    });
+  },
 };

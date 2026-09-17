@@ -37,6 +37,7 @@ const byCode: Record<string, MsgKey> = {
   stock_not_enough: "api.stockNotEnough",
   stripe_disabled: "api.stripeDisabled",
   invalid_claim: "shop.invalidClaim",
+  receipt_locked: "receipt.billToLocked",
 };
 
 const byMessage: Record<string, MsgKey> = {
@@ -104,6 +105,7 @@ const byMessage: Record<string, MsgKey> = {
   "请选择商品": "shop.cartEmpty",
   "购物车商品过多": "shop.maxQty",
   "无权查看该订单": "shop.invalidClaim",
+  "收据已下载，不可再修改": "receipt.billToLocked",
 };
 
 type Vars = Record<string, string | number>;
