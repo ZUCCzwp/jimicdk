@@ -2,8 +2,9 @@ import { ArrowsClockwise, CopySimple, Prohibit, Trash } from "@phosphor-icons/re
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "@/api/client";
-import { PLAN_LABEL, isCancellable, isRefreshable, isTerminal } from "@/api/types";
+import { isCancellable, isRefreshable, isTerminal, planLabel } from "@/api/types";
 import type { RefreshCdkResp, TaskView } from "@/api/types";
+import { ChallengePrompt } from "@/components/ChallengePrompt";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useOrders, useTaskPoll } from "@/hooks/useApi";
 import { useUser } from "@/hooks/useUser";
@@ -225,7 +226,7 @@ export function OrdersPage() {
                       <p className="truncate font-mono text-base font-medium">{cdkCode}</p>
                       <p className="mt-1 text-sm text-muted">
                         {task?.plan_type
-                          ? `${PLAN_LABEL[task.plan_type] ?? task.plan_type}  ${task.account_email}`
+                          ? `${planLabel(task.plan_type)}  ${task.account_email}`
                           : loading
                             ? t("orders.looking")
                             : t("orders.notFound")}
@@ -278,6 +279,13 @@ export function OrdersPage() {
                       )}
                     </div>
                   </div>
+                  {task?.challenge ? (
+                    <ChallengePrompt
+                      cdkCode={cdkCode}
+                      challenge={task.challenge}
+                      taskId={task.task_id}
+                    />
+                  ) : null}
                   {task?.failure_reason && (
                     <p className="mt-3 text-sm text-danger">{tb(task.failure_reason)}</p>
                   )}

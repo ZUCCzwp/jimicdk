@@ -1,5 +1,6 @@
-import { PLAN_LABEL } from "@/api/types";
+import { planLabel } from "@/api/types";
 import type { TaskView } from "@/api/types";
+import { ChallengePrompt } from "@/components/ChallengePrompt";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useI18n } from "@/i18n";
 import { Card } from "@heroui/react";
@@ -37,7 +38,7 @@ export function TaskPanel({
         <dl className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm">
           <div>
             <dt className="text-muted">{t("task.plan")}</dt>
-            <dd className="mt-1">{PLAN_LABEL[task.plan_type] ?? task.plan_type}</dd>
+            <dd className="mt-1">{planLabel(task.plan_type)}</dd>
           </div>
           <div>
             <dt className="text-muted">{t("task.account")}</dt>
@@ -52,6 +53,10 @@ export function TaskPanel({
             <dd className="mt-1">{task.updated_at}</dd>
           </div>
         </dl>
+
+        {task.challenge ? (
+          <ChallengePrompt cdkCode={task.cdk_code} challenge={task.challenge} taskId={task.task_id} />
+        ) : null}
 
         {task.task_status === "failed" && (
           <p className="text-sm text-danger">

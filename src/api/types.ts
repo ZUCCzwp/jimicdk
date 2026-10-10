@@ -12,7 +12,8 @@ export type TaskStatus =
 
 export type VerifyCdkResp = {
   valid: boolean;
-  plan_type?: PlanType;
+  plan_type?: string;
+  country?: string;
   pending?: boolean;
   cancellable?: boolean;
   refresh_remaining?: number;
@@ -41,16 +42,23 @@ export type CancelTaskResp = {
   plan_type: string;
 };
 
+export type TaskChallenge = {
+  type: string;
+  client_secret: string;
+  publishable_key: string;
+};
+
 export type TaskView = {
   task_id: string;
   cdk_code: string;
-  plan_type: PlanType;
+  plan_type: string;
   account_email: string;
   task_status: TaskStatus;
   created_at: string;
   updated_at: string;
   completed_at?: string;
   failure_reason?: string;
+  challenge?: TaskChallenge;
 };
 
 export type LookupTasksResp = {
@@ -323,6 +331,39 @@ export const PLAN_LABEL: Record<PlanType, string> = {
   "5x": "5x",
   "20x": "20x",
 };
+
+const PLAN_DISPLAY: Record<string, string> = {
+  go: "GO",
+  plus: "PLUS",
+  lite: "LITE",
+  pro: "PRO",
+  max: "MAX",
+  "5x": "LITE",
+  "10x": "PRO",
+  "20x": "PRO",
+  "25x": "MAX",
+  "50x": "MAX",
+  c250: "C250",
+  c500: "C500",
+  c1000: "C1000",
+  c2000: "C2000",
+  c2500: "C2500",
+  rgo: "RGO",
+  rplus: "RPLUS",
+  rlite: "RLITE",
+  rpro: "RPRO",
+  rmax: "RMAX",
+  r5x: "RLITE",
+  r10x: "RPRO",
+  r20x: "RPRO",
+  r25x: "RMAX",
+  r50x: "RMAX",
+};
+
+export function planLabel(plan?: string | null): string {
+  if (!plan) return "";
+  return PLAN_DISPLAY[plan] ?? plan.toUpperCase();
+}
 
 export function isTerminal(status: TaskStatus): boolean {
   return status === "completed" || status === "failed";

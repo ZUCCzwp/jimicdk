@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowsClockwise, ListChecks } from "@phosphor-icons/react";
 import { api } from "@/api/client";
-import { ApiError, PLAN_LABEL, type PlanType, type TaskView } from "@/api/types";
+import { ApiError, PLAN_LABEL, planLabel, type PlanType, type TaskView } from "@/api/types";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useI18n } from "@/i18n";
 import type { MsgKey } from "@/i18n/messages";
@@ -156,7 +156,7 @@ export function AdminTasksPage() {
                   <tr key={item.task_id} className="border-b border-border/70">
                     <td className="py-3 pr-4 font-mono text-[13px]">{item.cdk_code}</td>
                     <td className="py-3 pr-4 font-mono text-[13px]">{item.task_id}</td>
-                    <td className="py-3 pr-4">{PLAN_LABEL[item.plan_type] ?? item.plan_type}</td>
+                    <td className="py-3 pr-4">{planLabel(item.plan_type)}</td>
                     <td className="py-3 pr-4">
                       <div className="space-y-1">
                         <StatusBadge status={item.task_status} />

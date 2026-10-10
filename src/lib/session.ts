@@ -27,17 +27,16 @@ function readSession(raw: string): { ok: true; data: SessionFields } | { ok: fal
   if (!text) return { ok: false, issue: { key: "session.empty" } };
   try {
     const obj = JSON.parse(text) as Record<string, unknown>;
+    if (Object.keys(obj).length === 0) return { ok: false, issue: { key: "session.invalidJson" } };
     const token = str(obj, "accessToken", "access_token");
     if (!token) return { ok: false, issue: { key: "session.missingToken" } };
+    const sessionToken = str(obj, "sessionToken", "session_token");
+    if (!sessionToken) return { ok: false, issue: { key: "session.missingSessionToken" } };
     const user = asRecord(obj.user);
     const account = asRecord(obj.account);
     const email = str(obj, "email") || str(user, "email", "emailAddress") || str(account, "email");
     if (!email) return { ok: false, issue: { key: "session.missingEmail" } };
     const plan = str(obj, "planType", "plan_type") || str(user, "planType", "plan_type") || str(account, "planType", "plan_type");
-    if (!plan) return { ok: false, issue: { key: "session.missingPlan" } };
-    if (plan.toLowerCase() !== "free") {
-      return { ok: false, issue: { key: "session.notFree", vars: { plan } } };
-    }
     return { ok: true, data: { email, plan } };
   } catch {
     return { ok: false, issue: { key: "session.invalidJson" } };

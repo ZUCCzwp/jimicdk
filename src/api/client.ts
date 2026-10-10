@@ -96,6 +96,12 @@ export const api = {
       body: JSON.stringify({ cdk_code: cdkCode }),
     });
   },
+  challengeResolved(cdkCode: string, taskId: string) {
+    return request<{ status: string }>("/recharge/challenge-resolved", {
+      method: "POST",
+      body: JSON.stringify({ cdk_code: cdkCode, task_id: taskId }),
+    });
+  },
   refreshCdk(cdkCode: string) {
     return request<RefreshCdkResp>("/recharge/refresh-cdk", {
       method: "POST",

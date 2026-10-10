@@ -2,14 +2,16 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, ArrowsClockwise, CopySimple } from "@phosphor-icons/react";
 import { api } from "@/api/client";
-import { ApiError, PLAN_LABEL } from "@/api/types";
+import { ApiError, planLabel } from "@/api/types";
 import type { RefreshCdkResp, VerifyCdkResp } from "@/api/types";
+import { ChallengePrompt } from "@/components/ChallengePrompt";
 import { CredentialNotice } from "@/components/CredentialNotice";
 import { RedeemFaq } from "@/components/RedeemFaq";
 import { RedeemStepper } from "@/components/RedeemStepper";
 import { SessionGuide } from "@/components/SessionGuide";
-import { useOrders } from "@/hooks/useApi";
+import { useOrders, useTaskPoll } from "@/hooks/useApi";
 import { useI18n } from "@/i18n";
+import { countryName } from "@/lib/region";
 import { sessionEmail, sessionIssue } from "@/lib/session";
 import {
   Alert,
@@ -29,7 +31,7 @@ type Step = 1 | 2 | 3;
 export function RedeemPage() {
   const navigate = useNavigate();
   const { track } = useOrders();
-  const { t, tb, te } = useI18n();
+  const { t, tb, te, locale } = useI18n();
   const [step, setStep] = useState<Step>(1);
   const [cdk, setCdk] = useState("");
   const [session, setSession] = useState("");
@@ -43,6 +45,9 @@ export function RedeemPage() {
   const issue = useMemo(() => (session.trim() ? sessionIssue(session) : null), [session]);
   const sessionError = issue ? t(issue.key, issue.vars) : null;
   const email = useMemo(() => sessionEmail(session), [session]);
+  const { tasks: liveTasks } = useTaskPoll(submitted ? [cdk.trim()] : []);
+  const liveTask = liveTasks.find((item) => item.cdk_code === cdk.trim());
+  const region = verify?.country ? countryName(verify.country, locale) : "";
 
   async function onVerifyNext(code = cdk) {
     const value = code.trim();
@@ -189,7 +194,7 @@ export function RedeemPage() {
                   <Label>{t("session.label")}</Label>
                   <TextArea
                     className="min-h-52 font-mono text-sm"
-                    placeholder='{"accessToken":"...","user":{"email":"you@example.com"},"account":{"planType":"free"}}'
+                    placeholder='{"accessToken":"...","sessionToken":"...","user":{"email":"you@example.com"}}'
                     rows={8}
                     spellCheck={false}
                     variant="secondary"
@@ -199,7 +204,10 @@ export function RedeemPage() {
                   ) : email ? (
                     <Description>{t("session.account", { email })}</Description>
                   ) : (
-                    <Description>{t("session.needFree")}</Description>
+                    <Description>
+                      {region ? `${t("verify.country", { name: region })} ` : ""}
+                      {t("session.hint")}
+                    </Description>
                   )}
                 </TextField>
                 {error && <FormError title={t("cannotContinue")} message={error} />}
@@ -265,7 +273,8 @@ export function RedeemPage() {
                   />
                   {verify?.valid ? (
                     <Description className="text-base">
-                      {t("verify.ok", { plan: PLAN_LABEL[verify.plan_type ?? "plus"] })}
+                      {t("verify.ok", { plan: planLabel(verify.plan_type) || verify.plan_type || "" })}
+                      {region ? ` · ${t("verify.country", { name: region })}` : ""}
                       {verify.refresh_remaining
                         ? ` · ${t("refresh.remaining", { n: verify.refresh_remaining })}`
                         : ""}
@@ -367,7 +376,7 @@ export function RedeemPage() {
                   </div>
                   <div>
                     <dt className="text-muted">{t("confirm.plan")}</dt>
-                    <dd className="mt-1">{PLAN_LABEL[verify?.plan_type ?? "plus"]}</dd>
+                    <dd className="mt-1">{planLabel(verify?.plan_type) || t("confirm.noPlan")}</dd>
                   </div>
                   <div>
                     <dt className="text-muted">{t("confirm.account")}</dt>
@@ -375,6 +384,16 @@ export function RedeemPage() {
                   </div>
                 </dl>
                 {error && <FormError title={t("cannotSubmit")} message={error} />}
+                {submitted && liveTask?.challenge ? (
+                  <ChallengePrompt
+                    cdkCode={cdk.trim()}
+                    challenge={liveTask.challenge}
+                    taskId={liveTask.task_id}
+                  />
+                ) : null}
+                {submitted ? (
+                  <p className="text-sm text-muted">{t("confirm.stay")}</p>
+                ) : null}
                 {submitted ? (
                   <div className="flex flex-col gap-3 sm:flex-row">
                     <Button className="sm:flex-1" size="lg" onPress={() => navigate("/orders")}>

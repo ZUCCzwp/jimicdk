@@ -219,7 +219,7 @@ export function useTaskPoll(codes: string[]) {
           return;
         }
         void load(next);
-      }, 5500);
+      }, 2500);
     });
 
     return () => {
