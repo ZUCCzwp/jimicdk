@@ -13,10 +13,11 @@ import {
   Translate,
   User,
 } from "@phosphor-icons/react";
-import { useEffect, useRef, useState, type ComponentType } from "react";
+import { useCallback, useEffect, useRef, useState, type ComponentType } from "react";
 import { AnimatedOutlet } from "@/components/AnimatedOutlet";
 import { BrandLogo } from "@/components/BrandLogo";
-import { Alert, Button, Surface } from "@heroui/react";
+import { SiteNotices } from "@/components/SiteNotices";
+import { Button, Surface } from "@heroui/react";
 import { useAnnouncement } from "@/hooks/useApi";
 import { useNotifications } from "@/hooks/useApi";
 import { useI18n } from "@/i18n";
@@ -57,9 +58,11 @@ export function AdminShell() {
   const [theme, setThemeState] = useState<Theme>(() => getTheme());
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [noticesOpen, setNoticesOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const session = getAdminSession();
+  const onNoticesOpenChange = useCallback((next: boolean) => setNoticesOpen(next), []);
 
   useEffect(() => {
     setTheme(theme);
@@ -194,28 +197,12 @@ export function AdminShell() {
         </div>
       </header>
 
-      {announcement?.enabled && announcement.content && (
-        <div className="mx-auto max-w-7xl px-5 pt-6 sm:px-8">
-          <Alert status="accent">
-            <Alert.Indicator />
-            <Alert.Content>
-              <Alert.Title>{t("announce")}</Alert.Title>
-              <Alert.Description>{announcement.content}</Alert.Description>
-            </Alert.Content>
-          </Alert>
-        </div>
-      )}
-      {notifications?.enabled && notifications.content && (
-        <div className="mx-auto max-w-7xl px-5 pt-6 sm:px-8">
-          <Alert status="default">
-            <Alert.Indicator />
-            <Alert.Content>
-              <Alert.Title>{t("notifications.title")}</Alert.Title>
-              <Alert.Description>{notifications.content}</Alert.Description>
-            </Alert.Content>
-          </Alert>
-        </div>
-      )}
+      <SiteNotices
+        announcement={announcement}
+        notifications={notifications}
+        open={noticesOpen}
+        onOpenChange={onNoticesOpenChange}
+      />
 
       <main className="mx-auto w-full max-w-7xl px-5 py-10 sm:px-8 md:py-16">
         <AnimatedOutlet />

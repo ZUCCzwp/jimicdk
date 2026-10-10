@@ -52,47 +52,8 @@ body {
     color 0.35s ease;
 }
 
-@property --gx1 {
-  syntax: "<percentage>";
-  inherits: false;
-  initial-value: -6%;
-}
-@property --gy1 {
-  syntax: "<percentage>";
-  inherits: false;
-  initial-value: -10%;
-}
-@property --gx2 {
-  syntax: "<percentage>";
-  inherits: false;
-  initial-value: 108%;
-}
-@property --gy2 {
-  syntax: "<percentage>";
-  inherits: false;
-  initial-value: -4%;
-}
-@property --gx3 {
-  syntax: "<percentage>";
-  inherits: false;
-  initial-value: 82%;
-}
-@property --gy3 {
-  syntax: "<percentage>";
-  inherits: false;
-  initial-value: 112%;
-}
-@property --gx4 {
-  syntax: "<percentage>";
-  inherits: false;
-  initial-value: 38%;
-}
-@property --gy4 {
-  syntax: "<percentage>";
-  inherits: false;
-  initial-value: 16%;
-}
-
+/* Atmosphere: paint the glow once, then drift with transform only (compositor-friendly).
+   Never animate gradient stops / custom props — that forces full-layer repaint every frame. */
 body::before {
   content: "";
   position: fixed;
@@ -100,62 +61,26 @@ body::before {
   z-index: -2;
   pointer-events: none;
   background:
-    radial-gradient(1200px 640px at var(--gx1) var(--gy1), var(--glow-teal), transparent 58%),
-    radial-gradient(980px 560px at var(--gx2) var(--gy2), var(--glow-slate), transparent 54%),
-    radial-gradient(820px 540px at var(--gx3) var(--gy3), var(--glow-mist), transparent 58%),
-    radial-gradient(640px 360px at var(--gx4) var(--gy4), var(--glow-core), transparent 68%),
+    radial-gradient(ellipse 48% 36% at 16% 10%, var(--glow-teal), transparent 62%),
+    radial-gradient(ellipse 40% 34% at 90% 6%, var(--glow-slate), transparent 58%),
+    radial-gradient(ellipse 36% 32% at 78% 94%, var(--glow-mist), transparent 60%),
     var(--page-tint);
-  animation:
-    glow-drift 28s ease-in-out infinite,
-    glow-breathe 16s ease-in-out infinite;
+  transform: translate3d(0, 0, 0);
+  animation: glow-drift 48s ease-in-out infinite;
+  backface-visibility: hidden;
 }
 
 @keyframes glow-drift {
   0%,
   100% {
-    --gx1: -6%;
-    --gy1: -10%;
-    --gx2: 108%;
-    --gy2: -4%;
-    --gx3: 82%;
-    --gy3: 112%;
-    --gx4: 38%;
-    --gy4: 16%;
-  }
-  40% {
-    --gx1: 10%;
-    --gy1: 6%;
-    --gx2: 92%;
-    --gy2: 12%;
-    --gx3: 68%;
-    --gy3: 96%;
-    --gx4: 52%;
-    --gy4: 28%;
-  }
-  70% {
-    --gx1: 2%;
-    --gy1: 14%;
-    --gx2: 102%;
-    --gy2: 2%;
-    --gx3: 88%;
-    --gy3: 104%;
-    --gx4: 28%;
-    --gy4: 8%;
-  }
-}
-
-@keyframes glow-breathe {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 1;
+    transform: translate3d(-1.6%, -1.2%, 0);
   }
   50% {
-    transform: scale(1.08);
-    opacity: 0.88;
+    transform: translate3d(2.2%, 1.8%, 0);
   }
 }
 
+/* Static grid: one paint; no mask (mask + large layers is costly on Retina). */
 body::after {
   content: "";
   position: fixed;
@@ -166,23 +91,23 @@ body::after {
     repeating-linear-gradient(
       to right,
       var(--grid-line) 0 1px,
-      transparent 1px 56px
+      transparent 1px 64px
     ),
     repeating-linear-gradient(
       to bottom,
       var(--grid-line) 0 1px,
-      transparent 1px 56px
-    ),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
-  background-size: 56px 56px, 56px 56px, 160px 160px;
-  opacity: var(--atmosphere-overlay);
-  mask-image: radial-gradient(140% 110% at 50% 28%, #000 48%, transparent 92%);
+      transparent 1px 64px
+    );
+  background-size: 64px 64px;
+  opacity: calc(var(--atmosphere-overlay) * 0.4);
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 @keyframes page-in {
   from {
     opacity: 0;
-    transform: translateY(22px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
@@ -199,14 +124,9 @@ details summary {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .page-enter {
-    animation: none;
-  }
-
   body::before {
     animation: none;
     inset: 0;
-    opacity: 1;
     transform: none;
   }
 }
@@ -255,18 +175,107 @@ details summary {
   color: color-mix(in oklab, var(--foreground) 78%, transparent);
 }
 
+.site-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.4rem 0.7rem;
+  border-radius: 0.65rem;
+  border: 1px solid color-mix(in oklab, var(--foreground) 10%, transparent);
+  background: color-mix(in oklab, var(--surface) 88%, transparent);
+}
+
+.site-notice--announce {
+  background: color-mix(in oklab, var(--accent) 12%, var(--surface));
+  border-color: color-mix(in oklab, var(--accent) 28%, transparent);
+}
+
+.site-notice--notice {
+  background: color-mix(in oklab, var(--foreground) 4%, var(--surface));
+}
+
+.site-notice__badge {
+  flex-shrink: 0;
+  margin-top: 0.05rem;
+  border-radius: 0.35rem;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.68rem;
+  font-weight: 650;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+  color: var(--accent-foreground);
+  background: color-mix(in oklab, var(--accent) 82%, black);
+}
+
+.site-notice--notice .site-notice__badge {
+  color: var(--foreground);
+  background: color-mix(in oklab, var(--foreground) 10%, transparent);
+}
+
+.site-notice__text {
+  margin: 0;
+  min-width: 0;
+  flex: 1;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: color-mix(in oklab, var(--foreground) 78%, transparent);
+  overflow-wrap: anywhere;
+}
+
+.site-notice-modal__item {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 0.85rem;
+  border: 1px solid color-mix(in oklab, var(--foreground) 10%, transparent);
+}
+
+.site-notice-modal__item--announce {
+  background: color-mix(in oklab, var(--accent) 12%, var(--surface));
+  border-color: color-mix(in oklab, var(--accent) 28%, transparent);
+}
+
+.site-notice-modal__item--notice {
+  background: color-mix(in oklab, var(--foreground) 4%, var(--surface));
+}
+
+.site-notice-modal__badge {
+  width: fit-content;
+  border-radius: 0.4rem;
+  padding: 0.15rem 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 650;
+  line-height: 1.3;
+  color: var(--accent-foreground);
+  background: color-mix(in oklab, var(--accent) 82%, black);
+}
+
+.site-notice-modal__item--notice .site-notice-modal__badge {
+  color: var(--foreground);
+  background: color-mix(in oklab, var(--foreground) 10%, transparent);
+}
+
+.site-notice-modal__text {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: color-mix(in oklab, var(--foreground) 82%, transparent);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
 .app-header {
   position: sticky;
   top: 0;
   z-index: 20;
   width: 100%;
-  background: color-mix(in oklab, var(--background) 38%, transparent);
-  backdrop-filter: blur(22px) saturate(1.55);
-  -webkit-backdrop-filter: blur(22px) saturate(1.55);
+  background: color-mix(in oklab, var(--background) 94%, transparent);
+  backdrop-filter: blur(10px) saturate(1.15);
+  -webkit-backdrop-filter: blur(10px) saturate(1.15);
   border-bottom: 1px solid color-mix(in oklab, var(--foreground) 8%, transparent);
   box-shadow:
     inset 0 1px 0 color-mix(in oklab, white 62%, transparent),
-    0 10px 36px color-mix(in oklab, var(--foreground) 5%, transparent);
+    0 8px 24px color-mix(in oklab, var(--foreground) 4%, transparent);
   transition:
     background 0.35s ease,
     border-bottom-color 0.35s ease,
@@ -280,13 +289,13 @@ details summary {
 .app-footer {
   position: relative;
   width: 100%;
-  background: color-mix(in oklab, var(--background) 38%, transparent);
-  backdrop-filter: blur(22px) saturate(1.55);
-  -webkit-backdrop-filter: blur(22px) saturate(1.55);
+  background: color-mix(in oklab, var(--background) 82%, transparent);
+  backdrop-filter: blur(8px) saturate(1.15);
+  -webkit-backdrop-filter: blur(8px) saturate(1.15);
   border-top: 1px solid color-mix(in oklab, var(--foreground) 8%, transparent);
   box-shadow:
     inset 0 1px 0 color-mix(in oklab, white 52%, transparent),
-    0 -10px 30px color-mix(in oklab, var(--foreground) 4%, transparent);
+    0 -8px 20px color-mix(in oklab, var(--foreground) 3%, transparent);
   transition:
     background 0.35s ease,
     border-top-color 0.35s ease,
@@ -564,7 +573,7 @@ details summary {
 
 .dark .app-header,
 [data-theme="dark"] .app-header {
-  background: color-mix(in oklab, var(--background) 42%, transparent);
+  background: color-mix(in oklab, var(--background) 88%, transparent);
   border-bottom-color: color-mix(in oklab, white 10%, transparent);
   box-shadow:
     inset 0 1px 0 color-mix(in oklab, white 14%, transparent),

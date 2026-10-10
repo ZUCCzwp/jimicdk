@@ -5,6 +5,7 @@ import {
   List,
   ListChecks,
   MagnifyingGlass,
+  Megaphone,
   Moon,
   Prohibit,
   Question,
@@ -17,11 +18,12 @@ import {
   User,
   UserCircleCheck,
 } from "@phosphor-icons/react";
-import { useEffect, useRef, useState, type ComponentType } from "react";
+import { useCallback, useEffect, useRef, useState, type ComponentType } from "react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { AnimatedOutlet } from "@/components/AnimatedOutlet";
-import { Alert, Button, Chip, Surface } from "@heroui/react";
-import { useQueue } from "@/hooks/useApi";
+import { QueueStatusChip } from "@/components/QueueStatusChip";
+import { SiteNotices, hasSiteNotices } from "@/components/SiteNotices";
+import { Button, Surface } from "@heroui/react";
 import { useAnnouncement } from "@/hooks/useApi";
 import { useNotifications } from "@/hooks/useApi";
 import { useUser } from "@/hooks/useUser";
@@ -35,7 +37,7 @@ type NavItem = { to: string; id: string; label: MsgKey; icon: ComponentType<{ si
 const nav: NavItem[] = [
   { to: "/shop", id: "shop", label: "nav.shop", icon: Storefront },
   { to: "/lookup", id: "lookup", label: "nav.lookup", icon: MagnifyingGlass },
-  { to: "/", id: "redeem", label: "nav.redeem", icon: Key },
+  { to: "/redeem", id: "redeem", label: "nav.redeem", icon: Key },
   { to: "/orders", id: "orders", label: "nav.orders", icon: ListChecks },
   { to: "/cancel", id: "cancel", label: "nav.cancel", icon: Prohibit },
   { to: "/subscription", id: "sub", label: "nav.sub", icon: UserCircleCheck },
@@ -43,53 +45,16 @@ const nav: NavItem[] = [
 ];
 
 function itemActive(item: NavItem, pathname: string) {
-  return item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
+  return pathname === item.to || pathname.startsWith(`${item.to}/`);
 }
 
 function navButtonClass(active: boolean) {
   return `button text-base ${active ? "button--secondary" : "button--ghost"}`;
 }
 
-type QueueLight = "green" | "yellow" | "red";
-
-function queueLight(count: number): QueueLight {
-  if (count <= 0) return "green";
-  if (count <= 5) return "yellow";
-  return "red";
-}
-
-function QueueTrafficLight({
-  level,
-  live,
-  loading,
-}: {
-  level: QueueLight | null;
-  live: boolean;
-  loading?: boolean;
-}) {
-  if (loading || !level) {
-    return (
-      <span className="queue-light queue-light--loading" aria-hidden>
-        <span className="queue-light__dot queue-light__dot--red" />
-        <span className="queue-light__dot queue-light__dot--yellow is-on" />
-        <span className="queue-light__dot queue-light__dot--green" />
-      </span>
-    );
-  }
-
-  return (
-    <span className={`queue-light ${live ? "queue-light--live" : ""}`} aria-hidden>
-      <span className={`queue-light__dot queue-light__dot--red ${level === "red" ? "is-on" : ""}`} />
-      <span className={`queue-light__dot queue-light__dot--yellow ${level === "yellow" ? "is-on" : ""}`} />
-      <span className={`queue-light__dot queue-light__dot--green ${level === "green" ? "is-on" : ""}`} />
-    </span>
-  );
-}
-
 export function AppShell() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { data: queue, live: queueLive } = useQueue();
   const announcement = useAnnouncement();
   const notifications = useNotifications();
   const { user, logout } = useUser();
@@ -98,8 +63,11 @@ export function AppShell() {
   const [cartQty, setCartQty] = useState(() => cartCount());
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [noticesOpen, setNoticesOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const noticesAvailable = hasSiteNotices(announcement, notifications);
+  const onNoticesOpenChange = useCallback((next: boolean) => setNoticesOpen(next), []);
 
   useEffect(() => {
     setTheme(theme);
@@ -123,15 +91,10 @@ export function AppShell() {
     return () => document.removeEventListener("pointerdown", onPointer);
   }, [menuOpen, userMenuOpen]);
 
-  const queueLevel = queue ? queueLight(queue.pending_count) : null;
-  const queueHint =
-    queueLevel === "green"
-      ? t("nav.queueIdle")
-      : queueLevel === "yellow"
-        ? t("nav.queueModerate")
-        : queueLevel === "red"
-          ? t("nav.queueBusy")
-          : "";
+  function openNotices() {
+    setMenuOpen(false);
+    setNoticesOpen(true);
+  }
 
   return (
     <div className="flex min-h-[100dvh] flex-col text-foreground">
@@ -147,13 +110,24 @@ export function AppShell() {
               <NavLink
                 key={item.id}
                 className={navButtonClass(itemActive(item, location.pathname))}
-                end={item.to === "/"}
+                end={item.to !== "/shop"}
                 to={item.to}
               >
                 <item.icon size={24} weight="bold" />
                 {t(item.label)}
               </NavLink>
             ))}
+            <button
+              className={navButtonClass(noticesOpen)}
+              type="button"
+              onClick={openNotices}
+            >
+              <Megaphone size={24} weight="bold" />
+              {t("nav.notices")}
+              {noticesAvailable ? (
+                <span className="ml-0.5 size-1.5 rounded-full bg-[color:var(--accent)]" aria-hidden />
+              ) : null}
+            </button>
           </nav>
 
           <div className="flex shrink-0 items-center justify-end justify-self-end gap-1 sm:gap-2">
@@ -173,34 +147,26 @@ export function AppShell() {
                     <NavLink
                       key={item.id}
                       className={`${navButtonClass(itemActive(item, location.pathname))} w-full justify-start`}
-                      end={item.to === "/"}
+                      end={item.to !== "/shop"}
                       to={item.to}
                     >
                       <item.icon size={22} weight="bold" />
                       {t(item.label)}
                     </NavLink>
                   ))}
+                  <button
+                    className={`${navButtonClass(noticesOpen)} w-full justify-start`}
+                    type="button"
+                    onClick={openNotices}
+                  >
+                    <Megaphone size={22} weight="bold" />
+                    {t("nav.notices")}
+                  </button>
                 </Surface>
               )}
             </div>
 
-            <Chip
-              className="hidden xl:inline-flex shrink-0"
-              size="lg"
-              title={
-                queue && queueLevel
-                  ? `${queueHint} · ${t("nav.queue", { count: queue.pending_count })}`
-                  : t("nav.queueLoading")
-              }
-              variant="soft"
-            >
-              <span className="flex items-center gap-2">
-                <QueueTrafficLight level={queueLevel} live={queueLive} loading={!queue} />
-                <span className="queue-count">
-                  {queue ? t("nav.queue", { count: queue.pending_count }) : t("nav.queueLoading")}
-                </span>
-              </span>
-            </Chip>
+            <QueueStatusChip />
             <NavLink
               className={`button relative shrink-0 text-base ${location.pathname === "/cart" ? "button--secondary" : "button--ghost"}`}
               to="/cart"
@@ -287,28 +253,12 @@ export function AppShell() {
         </div>
       </header>
 
-      {announcement?.enabled && announcement.content && (
-        <div className="mx-auto max-w-7xl px-5 pt-6 sm:px-8">
-          <Alert status="accent">
-            <Alert.Indicator />
-            <Alert.Content>
-              <Alert.Title>{t("announce")}</Alert.Title>
-              <Alert.Description>{announcement.content}</Alert.Description>
-            </Alert.Content>
-          </Alert>
-        </div>
-      )}
-      {notifications?.enabled && notifications.content && (
-        <div className="mx-auto max-w-7xl px-5 pt-6 sm:px-8">
-          <Alert status="default">
-            <Alert.Indicator />
-            <Alert.Content>
-              <Alert.Title>{t("notifications.title")}</Alert.Title>
-              <Alert.Description>{notifications.content}</Alert.Description>
-            </Alert.Content>
-          </Alert>
-        </div>
-      )}
+      <SiteNotices
+        announcement={announcement}
+        notifications={notifications}
+        open={noticesOpen}
+        onOpenChange={onNoticesOpenChange}
+      />
 
       <main
         className={
@@ -368,6 +318,11 @@ export function AppShell() {
                   <NavLink className="footer-link" to="/faq">
                     {t("nav.faq")}
                   </NavLink>
+                </li>
+                <li>
+                  <button className="footer-link" type="button" onClick={openNotices}>
+                    {t("nav.notices")}
+                  </button>
                 </li>
               </ul>
             </div>

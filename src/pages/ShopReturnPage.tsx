@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { CheckCircle, CopySimple, SpinnerGap, WarningCircle } from "@phosphor-icons/react";
+import { CheckCircle, CopySimple, Receipt, SpinnerGap, WarningCircle } from "@phosphor-icons/react";
 import { api } from "@/api/client";
 import type { ShopOrderResp } from "@/api/types";
+import { OrderReceiptModal } from "@/components/OrderReceipt";
 import { useI18n } from "@/i18n";
+import { receiptFromShopOrder, type ReceiptData } from "@/lib/receipt";
 import { upsertOrder, upsertPurchase } from "@/lib/storage";
 import { Button, Spinner, Surface } from "@heroui/react";
 import { useUser } from "@/hooks/useUser";
@@ -32,6 +34,7 @@ export function ShopReturnPage() {
   const [error, setError] = useState<string | null>(orderNo && claim ? null : t("shop.return.missing"));
   const [order, setOrder] = useState<ShopOrderResp | null>(null);
   const [copied, setCopied] = useState(false);
+  const [receipt, setReceipt] = useState<ReceiptData | null>(null);
 
   useEffect(() => {
     if (!orderNo || !claim) return;
@@ -115,7 +118,22 @@ export function ShopReturnPage() {
               <CopySimple size={18} weight="bold" />
               {copied ? t("shop.return.copied") : t("shop.return.copy")}
             </Button>
-            <Link className="button button--secondary" to="/">
+            <Button
+              size="lg"
+              variant="secondary"
+              onPress={() =>
+                setReceipt(
+                  receiptFromShopOrder(order, {
+                    billToName: user?.display_name || user?.username,
+                    billToEmail: order.email || user?.email,
+                  }),
+                )
+              }
+            >
+              <Receipt size={18} weight="bold" />
+              {t("receipt.view")}
+            </Button>
+            <Link className="button button--secondary" to="/redeem">
               {t("shop.return.redeem")}
             </Link>
             <Link className="button button--ghost" to="/shop">
@@ -143,6 +161,27 @@ export function ShopReturnPage() {
           <Spinner size="sm" />
         </div>
       )}
+
+      {receipt ? (
+        <OrderReceiptModal
+          data={receipt}
+          open
+          onClose={() => setReceipt(null)}
+          onFinalized={(next) => {
+            setReceipt(next);
+            setOrder((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    bill_to_name: next.billToName,
+                    bill_to_email: next.billToEmail,
+                    receipt_downloaded_at: new Date().toISOString(),
+                  }
+                : prev,
+            );
+          }}
+        />
+      ) : null}
     </Surface>
   );
 }
