@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { ArrowRight, CheckCircle, ShieldWarning, WarningCircle } from "@phosphor-icons/react";
 import { Link } from "react-router-dom";
-import { Button, Surface } from "@heroui/react";
+import { Surface } from "@heroui/react";
 import { NewbieTip } from "@/components/NewbieTip";
 import { useI18n } from "@/i18n";
 import type { MsgKey } from "@/i18n/messages";
@@ -130,15 +130,13 @@ export function GuidePage() {
           </p>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row">
-          <Button asChild size="lg">
-            <Link to="/shop">
-              {t("guidePage.goShop")}
-              <ArrowRight size={16} weight="bold" />
-            </Link>
-          </Button>
-          <Button asChild size="lg" variant="secondary">
-            <Link to="/redeem">{t("guidePage.goRedeem")}</Link>
-          </Button>
+          <Link className="button" to="/shop">
+            {t("guidePage.goShop")}
+            <ArrowRight size={16} weight="bold" />
+          </Link>
+          <Link className="button button--secondary" to="/redeem">
+            {t("guidePage.goRedeem")}
+          </Link>
         </div>
       </div>
 
@@ -164,12 +162,10 @@ export function GuidePage() {
 
         <Section n={1} title={t("guidePage.b1Title")} lead={t("guidePage.b1Lead")}>
           <StepList keys={B1} />
-          <Button asChild className="mt-4" size="lg" variant="secondary">
-            <Link to="/shop">
-              {t("guidePage.goShop")}
-              <ArrowRight size={14} weight="bold" />
-            </Link>
-          </Button>
+          <Link className="button button--secondary mt-4" to="/shop">
+            {t("guidePage.goShop")}
+            <ArrowRight size={14} weight="bold" />
+          </Link>
         </Section>
 
         <Section n={2} title={t("guidePage.b2Title")} lead={t("guidePage.b2Lead")}>
@@ -185,15 +181,13 @@ export function GuidePage() {
             {t("guidePage.b3Tip")}
           </p>
           <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-            <Button asChild size="lg">
-              <Link to="/redeem">
-                {t("guidePage.goRedeem")}
-                <ArrowRight size={14} weight="bold" />
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="secondary">
-              <Link to="/lookup">{t("nav.lookup")}</Link>
-            </Button>
+            <Link className="button" to="/redeem">
+              {t("guidePage.goRedeem")}
+              <ArrowRight size={14} weight="bold" />
+            </Link>
+            <Link className="button button--secondary" to="/lookup">
+              {t("nav.lookup")}
+            </Link>
           </div>
         </Section>
 
@@ -305,18 +299,16 @@ export function GuidePage() {
         <Section title={t("guidePage.checkTitle")} lead={t("guidePage.checkLead")}>
           <BulletList keys={CHECKLIST} />
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-            <Button asChild size="lg">
-              <Link to="/shop">
-                {t("guidePage.goShop")}
-                <ArrowRight size={16} weight="bold" />
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="secondary">
-              <Link to="/redeem">{t("guidePage.goRedeem")}</Link>
-            </Button>
-            <Button asChild size="lg" variant="ghost">
-              <Link to="/faq">{t("faq.more")}</Link>
-            </Button>
+            <Link className="button" to="/shop">
+              {t("guidePage.goShop")}
+              <ArrowRight size={16} weight="bold" />
+            </Link>
+            <Link className="button button--secondary" to="/redeem">
+              {t("guidePage.goRedeem")}
+            </Link>
+            <Link className="button button--ghost" to="/faq">
+              {t("faq.more")}
+            </Link>
           </div>
         </Section>
       </div>

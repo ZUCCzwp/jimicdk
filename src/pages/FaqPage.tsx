@@ -2,7 +2,7 @@ import { ArrowRight, CaretDown } from "@phosphor-icons/react";
 import { Link } from "react-router-dom";
 import { useI18n } from "@/i18n";
 import type { MsgKey } from "@/i18n/messages";
-import { Button, Surface } from "@heroui/react";
+import { Surface } from "@heroui/react";
 
 const ITEMS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
 
@@ -18,12 +18,10 @@ export function FaqPage() {
             {t("faq.lead")}
           </p>
         </div>
-        <Button asChild size="lg" variant="secondary">
-          <Link to="/guide">
-            {t("faq.openGuide")}
-            <ArrowRight size={16} weight="bold" />
-          </Link>
-        </Button>
+        <Link className="button button--secondary" to="/guide">
+          {t("faq.openGuide")}
+          <ArrowRight size={16} weight="bold" />
+        </Link>
       </div>
 
       <div className="mt-10 space-y-3">
