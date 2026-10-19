@@ -3,7 +3,9 @@ import { Link } from "react-router-dom";
 import { MagnifyingGlass, Receipt, Storefront } from "@phosphor-icons/react";
 import { api } from "@/api/client";
 import type { ShopOrderResp } from "@/api/types";
+import { NewbieTip } from "@/components/NewbieTip";
 import { OrderReceiptModal } from "@/components/OrderReceipt";
+import { RecentPaidBanner } from "@/components/RecentPaidBanner";
 import { useUser } from "@/hooks/useUser";
 import { useI18n } from "@/i18n";
 import { receiptFromPurchase, receiptFromShopOrder, type ReceiptData } from "@/lib/receipt";
@@ -110,6 +112,9 @@ export function LookupPage() {
         <h1 className="text-4xl font-semibold tracking-tight md:text-5xl">{t("shop.queryTitle")}</h1>
         <p className="mt-4 text-base leading-relaxed text-muted md:text-lg">{t("shop.queryLead")}</p>
       </div>
+
+      <RecentPaidBanner />
+      <NewbieTip page="lookup" />
 
       {error && (
         <Alert status="danger">

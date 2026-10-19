@@ -169,7 +169,68 @@ export function upsertPurchase(purchase: StoredPurchase): StoredPurchase[] {
   const next = getPurchases().filter((item) => item.orderNo !== purchase.orderNo);
   next.unshift(purchase);
   localStorage.setItem(PURCHASES, JSON.stringify(next.slice(0, 50)));
+  if (purchase.status === "paid" && purchase.codes.length > 0) {
+    setLastPaidPurchase(purchase);
+  }
   return next;
+}
+
+const LAST_PAID = "jimicdk.lastPaid";
+const LAST_PAID_DISMISS = "jimicdk.lastPaidDismissed";
+const LAST_PAID_CHANGED = "jimicdk.lastPaid";
+
+export function getLastPaidPurchase(): StoredPurchase | null {
+  try {
+    const raw = localStorage.getItem(LAST_PAID);
+    if (!raw) return null;
+    const item = JSON.parse(raw) as StoredPurchase;
+    if (!item?.orderNo || !item.codes?.length) return null;
+    return item;
+  } catch {
+    return null;
+  }
+}
+
+export function setLastPaidPurchase(purchase: StoredPurchase): void {
+  localStorage.setItem(LAST_PAID, JSON.stringify(purchase));
+  window.dispatchEvent(new Event(LAST_PAID_CHANGED));
+}
+
+export function isLastPaidDismissed(orderNo?: string): boolean {
+  const target = orderNo || getLastPaidPurchase()?.orderNo;
+  if (!target) return true;
+  try {
+    return localStorage.getItem(LAST_PAID_DISMISS) === target;
+  } catch {
+    return false;
+  }
+}
+
+export function dismissLastPaidBanner(orderNo: string): void {
+  try {
+    localStorage.setItem(LAST_PAID_DISMISS, orderNo);
+  } catch {
+    /* ignore */
+  }
+  window.dispatchEvent(new Event(LAST_PAID_CHANGED));
+}
+
+export function onLastPaidChange(fn: () => void): () => void {
+  window.addEventListener(LAST_PAID_CHANGED, fn);
+  window.addEventListener("storage", fn);
+  return () => {
+    window.removeEventListener(LAST_PAID_CHANGED, fn);
+    window.removeEventListener("storage", fn);
+  };
+}
+
+export function getPendingCheckout(): { orderNo: string; claim: string } | null {
+  try {
+    const raw = sessionStorage.getItem("jimicdk.checkout");
+    return raw ? (JSON.parse(raw) as { orderNo: string; claim: string }) : null;
+  } catch {
+    return null;
+  }
 }
 
 const CART = "jimicdk.cart";
@@ -250,6 +311,53 @@ export function onCartChange(fn: () => void): () => void {
   window.addEventListener("storage", fn);
   return () => {
     window.removeEventListener(CART_CHANGED, fn);
+    window.removeEventListener("storage", fn);
+  };
+}
+
+const ONBOARDING = "jimicdk.onboarding";
+const ONBOARDING_CHANGED = "jimicdk.onboarding";
+const ONBOARDING_DEFER = "jimicdk.onboardingDefer";
+
+export type OnboardingStatus = "newbie" | "experienced";
+
+export function getOnboardingStatus(): OnboardingStatus | null {
+  try {
+    const raw = localStorage.getItem(ONBOARDING);
+    if (raw === "newbie" || raw === "experienced") return raw;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export function setOnboardingStatus(status: OnboardingStatus): void {
+  localStorage.setItem(ONBOARDING, status);
+  window.dispatchEvent(new Event(ONBOARDING_CHANGED));
+}
+
+export function isOnboardingDeferred(): boolean {
+  try {
+    return sessionStorage.getItem(ONBOARDING_DEFER) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function deferOnboardingThisSession(): void {
+  try {
+    sessionStorage.setItem(ONBOARDING_DEFER, "1");
+  } catch {
+    /* ignore */
+  }
+  window.dispatchEvent(new Event(ONBOARDING_CHANGED));
+}
+
+export function onOnboardingChange(fn: () => void): () => void {
+  window.addEventListener(ONBOARDING_CHANGED, fn);
+  window.addEventListener("storage", fn);
+  return () => {
+    window.removeEventListener(ONBOARDING_CHANGED, fn);
     window.removeEventListener("storage", fn);
   };
 }

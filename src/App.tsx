@@ -34,6 +34,9 @@ const CancelPage = lazy(() =>
   import("@/pages/CancelPage").then((m) => ({ default: m.CancelPage })),
 );
 const FaqPage = lazy(() => import("@/pages/FaqPage").then((m) => ({ default: m.FaqPage })));
+const GuidePage = lazy(() =>
+  import("@/pages/GuidePage").then((m) => ({ default: m.GuidePage })),
+);
 const LoginPage = lazy(() =>
   import("@/pages/LoginPage").then((m) => ({ default: m.LoginPage })),
 );
@@ -92,6 +95,7 @@ export default function App() {
             <Route path="/cancel" element={<CancelPage />} />
             <Route path="/subscription" element={<SubscriptionPage />} />
             <Route path="/faq" element={<FaqPage />} />
+            <Route path="/guide" element={<GuidePage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/account/wallet/return" element={<WalletReturnPage />} />
             <Route path="/account" element={<AccountPage />} />

@@ -1,11 +1,13 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, ArrowsClockwise, CopySimple } from "@phosphor-icons/react";
 import { api } from "@/api/client";
 import { ApiError, planLabel } from "@/api/types";
 import type { RefreshCdkResp, VerifyCdkResp } from "@/api/types";
 import { ChallengePrompt } from "@/components/ChallengePrompt";
 import { CredentialNotice } from "@/components/CredentialNotice";
+import { NewbieTip } from "@/components/NewbieTip";
+import { RecentPaidBanner } from "@/components/RecentPaidBanner";
 import { RedeemFaq } from "@/components/RedeemFaq";
 import { RedeemStepper } from "@/components/RedeemStepper";
 import { SessionGuide } from "@/components/SessionGuide";
@@ -159,6 +161,16 @@ export function RedeemPage() {
         <p className="mt-4 max-w-[44ch] text-base leading-relaxed text-muted md:text-lg">
           {t("redeem.lead")}
         </p>
+        <Link
+          className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-accent"
+          to="/guide"
+        >
+          {t("faq.openGuide")}
+          <ArrowRight size={14} weight="bold" />
+        </Link>
+
+        <RecentPaidBanner className="mt-6" />
+        <NewbieTip className="mt-6" page="redeem" />
 
         <div className="mt-10">
           <RedeemStepper step={step} />

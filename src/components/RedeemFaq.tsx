@@ -32,13 +32,22 @@ export function RedeemFaq() {
         ))}
       </div>
 
-      <Link
-        className="mt-2 inline-flex items-center gap-1.5 pt-4 text-sm font-medium text-accent"
-        to="/faq"
-      >
-        {t("faq.more")}
-        <ArrowRight size={14} weight="bold" />
-      </Link>
+      <div className="mt-2 flex flex-col gap-2 pt-4">
+        <Link
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-accent"
+          to="/guide"
+        >
+          {t("faq.openGuide")}
+          <ArrowRight size={14} weight="bold" />
+        </Link>
+        <Link
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-accent"
+          to="/faq"
+        >
+          {t("faq.more")}
+          <ArrowRight size={14} weight="bold" />
+        </Link>
+      </div>
     </Surface>
   );
 }

@@ -1,4 +1,5 @@
 import type { TaskStatus } from "@/api/types";
+import { isInProgress, isProcessingHot } from "@/api/types";
 import { Chip } from "@heroui/react";
 import { useI18n } from "@/i18n";
 import type { MsgKey } from "@/i18n/messages";
@@ -18,8 +19,17 @@ export function StatusBadge({
   size?: "sm" | "md" | "lg";
 }) {
   const { t } = useI18n();
+  const live = isInProgress(status);
+  const hot = isProcessingHot(status);
+
   return (
-    <Chip color={color(status)} size={size} variant="soft">
+    <Chip
+      className={live ? `status-badge--live${hot ? " status-badge--hot" : ""}` : undefined}
+      color={color(status)}
+      size={size}
+      variant="soft"
+    >
+      {live ? <span aria-hidden className="status-badge__pulse" /> : null}
       {t(`status.${status}` as MsgKey)}
     </Chip>
   );

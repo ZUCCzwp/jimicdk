@@ -11,6 +11,7 @@ ChatGPT 卡密兑换前端。React 19 + TypeScript + Vite 8 + Tailwind CSS v4 + 
 | `/cancel` | 查询并取消还在排队的任务（成功后任务记录删除，卡密可重提） |
 | `/subscription` | 查询 ChatGPT 订阅 |
 | `/faq` | 常见问题 |
+| `/guide` | 购买与兑换图文教程 |
 | `/admin` | 管理后台：兑换码池（购入 / 分配 / 列表） |
 | `/admin/tasks` | 管理后台：查询充值任务 |
 

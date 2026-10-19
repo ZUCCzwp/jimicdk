@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Minus, Plus, ShoppingCart, Storefront, Trash } from "@phosphor-icons/react";
 import { api } from "@/api/client";
 import type { ShopCatalogResp, ShopProduct, ShopReductionCodePreviewResp } from "@/api/types";
+import { NewbieTip } from "@/components/NewbieTip";
 import { useUser } from "@/hooks/useUser";
 import { useI18n } from "@/i18n";
 import { guestCheckoutErrorKey, normalizeClaim, validateGuestCheckout } from "@/lib/guestCheckout";
@@ -141,6 +142,8 @@ export function CartPage() {
       <div className="max-w-2xl">
         <h1 className="text-4xl font-semibold tracking-tight md:text-5xl">{t("cart.title")}</h1>
       </div>
+
+      <NewbieTip page="cart" />
 
       {error && (
         <Alert status="danger">

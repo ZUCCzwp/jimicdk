@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "@/api/client";
 import { PLAN_LABEL, type PlanType, type ShopCatalogResp } from "@/api/types";
+import { NewbieTip } from "@/components/NewbieTip";
+import { RecentPaidBanner } from "@/components/RecentPaidBanner";
 import { useI18n } from "@/i18n";
 import { Alert, Button, Chip, Input, Label, Spinner, Surface, TextField } from "@heroui/react";
 
@@ -50,7 +52,13 @@ export function ShopPage() {
       <div className="max-w-2xl">
         <h1 className="text-4xl font-semibold tracking-tight md:text-5xl">{t("shop.title")}</h1>
         <p className="mt-4 text-base leading-relaxed text-muted md:text-lg">{t("shop.lead")}</p>
+        <Link className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-accent" to="/guide">
+          {t("faq.openGuide")}
+        </Link>
       </div>
+
+      <RecentPaidBanner />
+      <NewbieTip page="shop" />
 
       {error && (
         <Alert status="danger">

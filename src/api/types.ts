@@ -373,6 +373,16 @@ export function isTerminal(status: TaskStatus): boolean {
   return status === "completed" || status === "failed";
 }
 
+/** Queued or actively running — not finished yet. */
+export function isInProgress(status?: TaskStatus): boolean {
+  return Boolean(status) && !isTerminal(status!);
+}
+
+/** Hot path: payment / processing / waiting for user confirm. */
+export function isProcessingHot(status?: TaskStatus): boolean {
+  return status === "paying" || status === "processing" || status === "await_confirm";
+}
+
 export function isCancellable(status: TaskStatus): boolean {
   return status === "submitted" || status === "pending";
 }

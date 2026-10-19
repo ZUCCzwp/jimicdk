@@ -21,11 +21,13 @@ import {
 import { useCallback, useEffect, useRef, useState, type ComponentType } from "react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { AnimatedOutlet } from "@/components/AnimatedOutlet";
+import { NewbieWelcome } from "@/components/NewbieWelcome";
 import { QueueStatusChip } from "@/components/QueueStatusChip";
 import { SiteNotices, hasSiteNotices } from "@/components/SiteNotices";
 import { Button, Surface } from "@heroui/react";
 import { useAnnouncement } from "@/hooks/useApi";
 import { useNotifications } from "@/hooks/useApi";
+import { useOnboarding } from "@/hooks/useOnboarding";
 import { useUser } from "@/hooks/useUser";
 import { useI18n } from "@/i18n";
 import type { MsgKey } from "@/i18n/messages";
@@ -58,6 +60,7 @@ export function AppShell() {
   const announcement = useAnnouncement();
   const notifications = useNotifications();
   const { user, logout } = useUser();
+  const { readyForNotices } = useOnboarding();
   const { locale, setLocale, t } = useI18n();
   const [theme, setThemeState] = useState<Theme>(() => getTheme());
   const [cartQty, setCartQty] = useState(() => cartCount());
@@ -253,9 +256,11 @@ export function AppShell() {
         </div>
       </header>
 
+      <NewbieWelcome />
       <SiteNotices
         announcement={announcement}
         notifications={notifications}
+        autoPrompt={readyForNotices}
         open={noticesOpen}
         onOpenChange={onNoticesOpenChange}
       />
@@ -314,6 +319,11 @@ export function AppShell() {
             <div>
               <h4 className="footer-column-title">INFO</h4>
               <ul className="mt-3 space-y-2">
+                <li>
+                  <NavLink className="footer-link" to="/guide">
+                    {t("nav.guide")}
+                  </NavLink>
+                </li>
                 <li>
                   <NavLink className="footer-link" to="/faq">
                     {t("nav.faq")}

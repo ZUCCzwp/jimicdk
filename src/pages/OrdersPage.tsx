@@ -2,9 +2,17 @@ import { ArrowsClockwise, CopySimple, Prohibit, Trash } from "@phosphor-icons/re
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "@/api/client";
-import { isCancellable, isRefreshable, isTerminal, planLabel } from "@/api/types";
-import type { RefreshCdkResp, TaskView } from "@/api/types";
+import {
+  isCancellable,
+  isInProgress,
+  isProcessingHot,
+  isRefreshable,
+  isTerminal,
+  planLabel,
+} from "@/api/types";
+import type { RefreshCdkResp, TaskStatus, TaskView } from "@/api/types";
 import { ChallengePrompt } from "@/components/ChallengePrompt";
+import { NewbieTip } from "@/components/NewbieTip";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useOrders, useTaskPoll } from "@/hooks/useApi";
 import { useUser } from "@/hooks/useUser";
@@ -112,12 +120,38 @@ export function OrdersPage() {
 
   const found = tasks.length;
 
+  const sortedCodes = useMemo(() => {
+    const map = new Map(tasks.map((item) => [item.cdk_code, item]));
+    for (const item of accountTasks) {
+      if (!map.has(item.cdk_code)) map.set(item.cdk_code, item);
+    }
+    const rank = (status?: TaskStatus) => {
+      if (isProcessingHot(status)) return 0;
+      if (isInProgress(status)) return 1;
+      if (!status) return 2;
+      if (status === "failed") return 3;
+      return 4;
+    };
+    return [...codes].sort(
+      (a, b) => rank(map.get(a)?.task_status) - rank(map.get(b)?.task_status),
+    );
+  }, [codes, tasks, accountTasks]);
+
+  function liveLabel(status?: TaskStatus) {
+    if (status === "await_confirm") return t("orders.liveConfirm");
+    if (isProcessingHot(status)) return t("orders.liveProcessing");
+    if (isInProgress(status)) return t("orders.liveQueued");
+    return null;
+  }
+
   return (
     <section>
       <h1 className="text-4xl font-semibold tracking-tight md:text-5xl">{t("orders.title")}</h1>
       <p className="mt-4 max-w-[48ch] text-base leading-relaxed text-muted md:text-lg">
         {user ? t("orders.signedInLead") : t("orders.lead")}
       </p>
+
+      <NewbieTip className="mt-6" page="orders" />
 
       <Surface className="mt-10 flex flex-col gap-6 rounded-3xl p-6 md:p-9">
         <form
@@ -215,13 +249,20 @@ export function OrdersPage() {
         </div>
       ) : (
         <ul className="mt-6 grid gap-4">
-          {codes.map((cdkCode) => {
+          {sortedCodes.map((cdkCode) => {
             const task = byCode.get(cdkCode);
             const localOnly = !accountCodes.includes(cdkCode);
+            const active = isInProgress(task?.task_status);
+            const hot = isProcessingHot(task?.task_status);
+            const live = liveLabel(task?.task_status);
             return (
               <li key={cdkCode}>
-                <div className="rounded-3xl border border-border/80 bg-surface p-5">
-                  <div className="flex items-center justify-between gap-3">
+                <div
+                  className={`order-card rounded-3xl border border-border/80 bg-surface p-5${
+                    active ? " order-card--active" : ""
+                  }${hot ? " order-card--hot" : ""}`}
+                >
+                  <div className="relative flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <p className="truncate font-mono text-base font-medium">{cdkCode}</p>
                       <p className="mt-1 text-sm text-muted">
@@ -231,13 +272,19 @@ export function OrdersPage() {
                             ? t("orders.looking")
                             : t("orders.notFound")}
                       </p>
+                      {live ? (
+                        <p className="order-card__live-label">
+                          <span className="order-card__live-dot" />
+                          {live}
+                        </p>
+                      ) : null}
                       {task?.task_status === "completed" && (task.completed_at || task.updated_at) ? (
                         <p className="mt-1 text-sm text-muted">
                           {t("orders.redeemedAt", { time: task.completed_at || task.updated_at })}
                         </p>
                       ) : null}
                     </div>
-                    <div className="flex shrink-0 items-center gap-2">
+                    <div className="relative flex shrink-0 items-center gap-2">
                       {task?.task_status ? (
                         <StatusBadge size="lg" status={task.task_status} />
                       ) : loading ? (
