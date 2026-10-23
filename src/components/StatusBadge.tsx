@@ -30,7 +30,7 @@ export function StatusBadge({
       variant="soft"
     >
       {live ? <span aria-hidden className="status-badge__pulse" /> : null}
-      {t(`status.${status}` as MsgKey)}
+      <Chip.Label>{t(`status.${status}` as MsgKey)}</Chip.Label>
     </Chip>
   );
 }

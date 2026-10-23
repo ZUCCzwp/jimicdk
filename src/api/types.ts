@@ -375,7 +375,7 @@ export function isTerminal(status: TaskStatus): boolean {
 
 /** Queued or actively running — not finished yet. */
 export function isInProgress(status?: TaskStatus): boolean {
-  return Boolean(status) && !isTerminal(status!);
+  return Boolean(status) && !isTerminal(status);
 }
 
 /** Hot path: payment / processing / waiting for user confirm. */

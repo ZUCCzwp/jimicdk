@@ -191,13 +191,6 @@ export function OrdersPage() {
         </form>
       </Surface>
 
-      {codes.length > 0 && (
-        <p className="mt-4 text-sm text-muted">
-          {t("orders.batchFound", { found, total: codes.length })}
-          {truncated ? ` ${t("orders.batchTruncated")}` : ""}
-        </p>
-      )}
-
       {refreshed && (
         <Alert className="mt-6" status="success">
           <Alert.Indicator />
@@ -248,99 +241,105 @@ export function OrdersPage() {
           </div>
         </div>
       ) : (
-        <ul className="mt-6 grid gap-4">
-          {sortedCodes.map((cdkCode) => {
-            const task = byCode.get(cdkCode);
-            const localOnly = !accountCodes.includes(cdkCode);
-            const active = isInProgress(task?.task_status);
-            const hot = isProcessingHot(task?.task_status);
-            const live = liveLabel(task?.task_status);
-            return (
-              <li key={cdkCode}>
-                <div
-                  className={`order-card rounded-3xl border border-border/80 bg-surface p-5${
-                    active ? " order-card--active" : ""
-                  }${hot ? " order-card--hot" : ""}`}
-                >
-                  <div className="relative flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate font-mono text-base font-medium">{cdkCode}</p>
-                      <p className="mt-1 text-sm text-muted">
-                        {task?.plan_type
-                          ? `${planLabel(task.plan_type)}  ${task.account_email}`
-                          : loading
-                            ? t("orders.looking")
-                            : t("orders.notFound")}
-                      </p>
-                      {live ? (
-                        <p className="order-card__live-label">
-                          <span className="order-card__live-dot" />
-                          {live}
+        <Surface className="mt-6 rounded-3xl p-5 md:p-7">
+          <p className="text-sm text-muted">
+            {t("orders.batchFound", { found, total: codes.length })}
+            {truncated ? ` ${t("orders.batchTruncated")}` : ""}
+          </p>
+          <ul className="mt-4 grid gap-3">
+            {sortedCodes.map((cdkCode) => {
+              const task = byCode.get(cdkCode);
+              const localOnly = !accountCodes.includes(cdkCode);
+              const active = isInProgress(task?.task_status);
+              const hot = isProcessingHot(task?.task_status);
+              const live = liveLabel(task?.task_status);
+              return (
+                <li key={cdkCode}>
+                  <div
+                    className={`order-card rounded-2xl border border-border/80 bg-surface px-5 py-4${
+                      active ? " order-card--active" : ""
+                    }${hot ? " order-card--hot" : ""}`}
+                  >
+                    <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="min-w-0 flex-1">
+                        <p className="break-all font-mono text-base font-medium">{cdkCode}</p>
+                        <p className="mt-1 break-all text-sm text-muted">
+                          {task?.plan_type
+                            ? `${planLabel(task.plan_type)}  ${task.account_email}`
+                            : loading
+                              ? t("orders.looking")
+                              : t("orders.notFound")}
                         </p>
-                      ) : null}
-                      {task?.task_status === "completed" && (task.completed_at || task.updated_at) ? (
-                        <p className="mt-1 text-sm text-muted">
-                          {t("orders.redeemedAt", { time: task.completed_at || task.updated_at })}
-                        </p>
-                      ) : null}
+                        {live ? (
+                          <p className="order-card__live-label">
+                            <span className="order-card__live-dot" />
+                            {live}
+                          </p>
+                        ) : null}
+                        {task?.task_status === "completed" && (task.completed_at || task.updated_at) ? (
+                          <p className="mt-1 text-sm text-muted">
+                            {t("orders.redeemedAt", { time: task.completed_at || task.updated_at })}
+                          </p>
+                        ) : null}
+                      </div>
+                      <div className="relative flex shrink-0 items-center gap-2 self-start sm:self-center">
+                        {task?.task_status ? (
+                          <StatusBadge size="lg" status={task.task_status} />
+                        ) : loading ? (
+                          <Spinner size="sm" />
+                        ) : null}
+                        {task && isCancellable(task.task_status) && (
+                          <Button
+                            isIconOnly
+                            aria-label={t("orders.cancelAria")}
+                            size="lg"
+                            variant="ghost"
+                            onPress={() => navigate(`/cancel?cdk=${encodeURIComponent(cdkCode)}`)}
+                          >
+                            <Prohibit size={16} />
+                          </Button>
+                        )}
+                        {isRefreshable(task?.task_status) && (
+                          <Button
+                            isIconOnly
+                            aria-label={t("orders.refreshAria")}
+                            isPending={refreshing === cdkCode}
+                            size="lg"
+                            variant="ghost"
+                            onPress={() => void onRefresh(cdkCode)}
+                          >
+                            <ArrowsClockwise size={16} />
+                          </Button>
+                        )}
+                        {localOnly && (!task || isTerminal(task.task_status)) && (
+                          <Button
+                            isIconOnly
+                            aria-label={t("orders.removeAria")}
+                            size="lg"
+                            variant="ghost"
+                            onPress={() => drop(cdkCode)}
+                          >
+                            <Trash size={16} />
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                    <div className="relative flex shrink-0 items-center gap-2">
-                      {task?.task_status ? (
-                        <StatusBadge size="lg" status={task.task_status} />
-                      ) : loading ? (
-                        <Spinner size="sm" />
-                      ) : null}
-                      {task && isCancellable(task.task_status) && (
-                        <Button
-                          isIconOnly
-                          aria-label={t("orders.cancelAria")}
-                          size="lg"
-                          variant="ghost"
-                          onPress={() => navigate(`/cancel?cdk=${encodeURIComponent(cdkCode)}`)}
-                        >
-                          <Prohibit size={16} />
-                        </Button>
-                      )}
-                      {isRefreshable(task?.task_status) && (
-                        <Button
-                          isIconOnly
-                          aria-label={t("orders.refreshAria")}
-                          isPending={refreshing === cdkCode}
-                          size="lg"
-                          variant="ghost"
-                          onPress={() => void onRefresh(cdkCode)}
-                        >
-                          <ArrowsClockwise size={16} />
-                        </Button>
-                      )}
-                      {localOnly && (!task || isTerminal(task.task_status)) && (
-                        <Button
-                          isIconOnly
-                          aria-label={t("orders.removeAria")}
-                          size="lg"
-                          variant="ghost"
-                          onPress={() => drop(cdkCode)}
-                        >
-                          <Trash size={16} />
-                        </Button>
-                      )}
-                    </div>
+                    {task?.challenge ? (
+                      <ChallengePrompt
+                        cdkCode={cdkCode}
+                        challenge={task.challenge}
+                        taskId={task.task_id}
+                      />
+                    ) : null}
+                    {task?.failure_reason && (
+                      <p className="mt-3 text-sm text-danger">{tb(task.failure_reason)}</p>
+                    )}
                   </div>
-                  {task?.challenge ? (
-                    <ChallengePrompt
-                      cdkCode={cdkCode}
-                      challenge={task.challenge}
-                      taskId={task.task_id}
-                    />
-                  ) : null}
-                  {task?.failure_reason && (
-                    <p className="mt-3 text-sm text-danger">{tb(task.failure_reason)}</p>
-                  )}
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+                </li>
+              );
+            })}
+          </ul>
+        </Surface>
       )}
     </section>
   );
